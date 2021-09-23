@@ -1,0 +1,19 @@
+﻿  Feasibilitysearch.cpp
+  Geneticalgorithm.cpp
+  Initialsolution.cpp
+  Localsearch.cpp
+  Main.cpp
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(21,5): error C2065: 'TabuList': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(21,14): error C2146: syntax error: missing ';' before identifier 'list'
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(21,14): error C2065: 'list': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(22,5): error C2065: 'list': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(23,5): error C2065: 'list': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(24,5): error C2065: 'list': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(25,5): error C2065: 'list': undeclared identifier
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Main.cpp(26,5): error C2065: 'list': undeclared identifier
+  Pathrelinking.cpp
+  Tabusearch.cpp
+  Generating Code...
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Tabusearch.cpp(47): warning C4715: 'TabuList::checkInTabuList': not all control paths return a value
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Tabusearch.cpp(143): error C4716: 'Neighbourhood::getBestFromNeighbour': must return a value
+C:\Users\mahbu\Desktop\Drone Project\Solver in Progress\GRASPPROPT\Tabusearch.cpp(148): error C4716: 'Neighbourhood::getBestFromKNeighbour': must return a value
