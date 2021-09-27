@@ -2,6 +2,8 @@
 #include <map>
 #include <vector>
 #include <list>
+#include <random>
+#include <array>
 
 
 #ifndef TABUSEARCH_H
@@ -64,7 +66,7 @@ public:
 	TabuList(int routeNum, int customerID);
 	void showTabuList() const;
 	void addToTabuList(int routeNum, int customerID);
-	void clearTabuList();
+	std::multimap<int, int> getTabuList();
 	bool checkInTabuList(int routeNumber, int customerID);  
 };
 
@@ -84,16 +86,16 @@ public:
 class FeasibleSolution {
 private:
 	std::vector<int> solution;
-	double cost;
+	double solCost = 0;
+	int separatorIntVal = 0;
 public:
 	FeasibleSolution();//default constructor
-	FeasibleSolution(std::vector<int> sol, double cost);//constructor
-	//FeasibleSolution(const FeasibleSolution & sol); //copy constructor
+	FeasibleSolution(std::vector<int> sol, double cost, int sepIntVal);//constructor
+	FeasibleSolution(const FeasibleSolution & sol); //copy constructor
 	void showSolution() const;
-	//std::vector<int> getSoluion();
-	void showCost();
+	std::vector<int> getSolution();
+	int getSeparatorIntVal();
 	double getCost();
-	void clearSolution();
 };
 
 
@@ -103,34 +105,36 @@ private:
 	std::list<FeasibleSolution> neighbourSolution;
 	std::list<FeasibleSolution> kNeighbourSolution;
 public:
-	Neighbourhood();//default constructor
+	Neighbourhood() {}//default constructor
 	Neighbourhood(const Neighbourhood & neighbour);// copy constructor
-	void insertNeighbour(FeasibleSolution neighbour);
+	//Neighbourhood operator=(const Neighbourhood & neighHood) const;//operator= overloading
+	void insertToNeighbour(FeasibleSolution febSolution);
+	void insertToKNeighbour();//call of this function makes the neighbourSolution list empty
 	void showNeighbours();
-	void insertToKNeighbour(std::list<FeasibleSolution> neighbourSolution);
 	void showKNeighbours();
 	FeasibleSolution getBestFromNeighbour();
 	FeasibleSolution getBestFromKNeighbour();
-	void clearNeighbourSolution();
-	void clearKNeighbourSolution();
 };
 
 
 class Tabusearch{
 private:
-	int k;// k for k-chain
+	int k=2;// k for k-chain
 	FeasibleSolution initialSolution;//input solution to the tabu search algoirthm
 	FeasibleSolution incumbentSolution;//current best solution
-	FeasibleSolution finalSolution;//output solution from the tabu search algoirthm
+	FeasibleSolution iterationBestSolution;//output solution from the tabu search algoirthm
+	std::multimap<int, int> routCustomerMap;
+	int numberOfRoutes = 0;
+	TabuList tabuList;
+	std::list<std::vector<int>> listOfRoutes;
 public:	
 	Tabusearch();//default constructor
-	Tabusearch(FeasibleSolution feasblesol);//constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
-	void generateKNeighbourSolutions();//k-chain moves uses Add and Drop as well as 1-Swap methods
+	void generateRouteCustomerMap(FeasibleSolution febSol);
+	void generateKNeighbourSolutions();//k-chain moves uses Add and Drop method
 	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
-	void clearTabuSearchData();
 };
 
 
