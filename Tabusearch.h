@@ -85,17 +85,21 @@ public:
 //class feasible solution 
 class FeasibleSolution {
 private:
-	std::vector<int> solution;
+	std::list<int> solution;
 	double solCost = 0;
 	int separatorIntVal = 0;
+	int sourceRoute = 0;
+	int addedNode = 0;
 public:
 	FeasibleSolution();//default constructor
-	FeasibleSolution(std::vector<int> sol, double cost, int sepIntVal);//constructor
+	FeasibleSolution(std::list<int> sol, double cost, int sepIntVal, int sourceRoute, int addedNode);//constructor
 	FeasibleSolution(const FeasibleSolution & sol); //copy constructor
 	void showSolution() const;
-	std::vector<int> getSolution();
+	std::list<int> getSolution();
 	int getSeparatorIntVal();
 	double getCost();
+	int getSourceRoute();
+	int getAddedNode();
 };
 
 
@@ -119,23 +123,24 @@ public:
 
 class Tabusearch{
 private:
-	int k=2;// k for k-chain
+	int k;// k for k-chain
+	int numberOfRoutes;
+	int maxRouteCapacity;
+	std::vector<int> demandVector;
+	std::vector<std::vector<int>> distanceMatrix;
+	TabuList tabuList;
 	FeasibleSolution initialSolution;//input solution to the tabu search algoirthm
 	FeasibleSolution incumbentSolution;//current best solution
 	FeasibleSolution iterationBestSolution;//output solution from the tabu search algoirthm
 	std::multimap<int, int> routCustomerMap;
-	int numberOfRoutes = 0;
-	TabuList tabuList;
-	std::list<std::vector<int>> listOfRoutes;
-	double distanceMatrix[100][100];
-	int demandVector[100];
+	std::list<std::list<int>> listOfRoutes;
 public:	
-	Tabusearch();//default constructor
+	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<int>> disMat);//default constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);
-	FeasibleSolution generateNeighbour(std::list<std::vector<int>> listOfRoutes, double cost, int separatorInt, int addToRoute, int dropFromRoute, int dropNode);
-	void generateKNeighbourSolutions();//k-chain moves uses Add and Drop method
+	FeasibleSolution generateNeighbourByAddDrop(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int addToRoute, int dropFromRoute, int dropNode);
+	void generateKChainNeighbourSolutions();//k-chain moves uses Add and Drop method
 	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
 };

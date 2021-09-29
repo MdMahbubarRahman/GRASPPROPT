@@ -68,32 +68,38 @@ FeasibleSolution::FeasibleSolution() {
 }
 
 //constructor
-FeasibleSolution::FeasibleSolution(std::vector<int> sol, double cost, int sepIntVal) {
-	solCost = cost;
-	separatorIntVal = sepIntVal;
+FeasibleSolution::FeasibleSolution(std::list<int> sol, double cost, int sepIntVal, int srcRoute, int addNode){
+	solCost			 = cost;
+	separatorIntVal  = sepIntVal;
+	sourceRoute		 = srcRoute;
+	addedNode		 = addNode;
 	if (!sol.empty())
-		for (int i = 0; i < sol.size(); ++i) {
-			solution.push_back(sol.at(i));
+		for (auto it = sol.begin(); it != sol.end(); ++it) {
+			solution.push_back(*it);
 		}
-	else
+	else {
 		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+	}	
 }
 
 //copy constructor
 FeasibleSolution::FeasibleSolution(const FeasibleSolution & febSol) {
-	solCost = febSol.solCost;
+	solCost			= febSol.solCost;
 	separatorIntVal = febSol.separatorIntVal;
+	sourceRoute	    = febSol.sourceRoute;
+	addedNode	    = febSol.addedNode;
 	if (!febSol.solution.empty())
-		for (int i = 0; i < febSol.solution.size(); ++i) {
-			solution.push_back(febSol.solution.at(i));
+		for (auto it = febSol.solution.begin(); it != febSol.solution.end(); ++it) {
+			solution.push_back(*it);
 		}
-	else
-		std::cout << "The solution vector is empty! Copy constructor could not copy the solution." << std::endl;
+	else {
+		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+	}
 }
 
 //prints the feasible solution object
 void FeasibleSolution::showSolution() const {
-	if (solution.size() != 0) {
+	if (!solution.empty()) {
 		std::cout << "The solution is : " << std::endl;
 		for (const auto& iter : solution) {
 			std::cout << iter << ", "; 
@@ -101,13 +107,15 @@ void FeasibleSolution::showSolution() const {
 		std::cout << std::endl;
 		std::cout << "The cost of the solution is : "<< solCost <<std::endl;
 		std::cout << "The separtor interger value is : " << separatorIntVal << std::endl;
+		std::cout << "The added Node is : " << addedNode << std::endl;
+		std::cout << "The node is added from Route : " << sourceRoute << std::endl;
 	}
 	else
 		std::cout << "The solution is empty!" << std::endl;
 }
 
 //returns solution vector
-std::vector<int> FeasibleSolution::getSolution() {
+std::list<int> FeasibleSolution::getSolution() {
 	return solution;
 }
 
@@ -119,6 +127,14 @@ int FeasibleSolution::getSeparatorIntVal() {
 //returns cost of the solution
 double FeasibleSolution::getCost() {
 	return solCost;
+}
+
+//return the outsourced route
+int FeasibleSolution::getSourceRoute() {
+	return sourceRoute;
+}
+int FeasibleSolution::getAddedNode() {
+	return addedNode;
 }
 
 // copy constructor
@@ -145,19 +161,20 @@ void Neighbourhood::insertToNeighbour(FeasibleSolution neighbour) {
 
 //inserts neighbour solutions to the kneighbour solution list
 void Neighbourhood::insertToKNeighbour() {
-	if (neighbourSolution.size() != 0) {
+	if (!neighbourSolution.empty()) {
 		for (auto it : neighbourSolution) {
 			kNeighbourSolution.push_back((it));
 		}
 		neighbourSolution.clear();
 	}
-	else
+	else {
 		std::cout << "The neighbour solution list is empty!" << std::endl;
+	}	
 }
 
 //shows neighbouring solutions
 void Neighbourhood::showNeighbours() {
-	if (neighbourSolution.size() != 0) {
+	if (!neighbourSolution.empty()) {
 		for (const auto &it : neighbourSolution) {
 			it.showSolution();
 		}
@@ -166,7 +183,7 @@ void Neighbourhood::showNeighbours() {
 
 //shows all k neighbour solutions
 void Neighbourhood::showKNeighbours() {
-	if (kNeighbourSolution.size() != 0) {
+	if (!kNeighbourSolution.empty()) {
 		for (const auto &it : kNeighbourSolution) {
 			it.showSolution();
 		}
@@ -177,7 +194,7 @@ void Neighbourhood::showKNeighbours() {
 FeasibleSolution Neighbourhood::getBestFromNeighbour() {
 	double cost = 10000000.0;
 	std::list<FeasibleSolution>::iterator iter;
-	if (neighbourSolution.size() != 0) {
+	if (!neighbourSolution.empty()) {
 		for (auto it = neighbourSolution.begin(); it != neighbourSolution.end(); ++it) {
 			if ((*it).getCost() < cost) {
 				cost = (*it).getCost();
@@ -194,7 +211,7 @@ FeasibleSolution Neighbourhood::getBestFromNeighbour() {
 FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
 	double cost = 10000000.0;
 	std::list<FeasibleSolution>::iterator iter;
-	if (kNeighbourSolution.size() != 0) {
+	if (!kNeighbourSolution.empty()) {
 		for (auto it = kNeighbourSolution.begin(); it != kNeighbourSolution.end(); ++it) {
 			if ((*it).getCost() < cost) {
 				cost = (*it).getCost();
@@ -206,18 +223,34 @@ FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
 	return (*iter);
 }
 
+
 //default constructor
-Tabusearch::Tabusearch() {
-	//need to initialize distanceMatrix
-	//need to initialize demandVector
+Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<int>> disMat) {
+	k = 2;
+	numberOfRoutes = 0;
+	maxRouteCapacity = 10;
+
+	for (int i = 0; i < demandVec.size(); ++i) {
+		demandVector.push_back(demandVec.at(i));
+	}
+	for (int i = 0; i < disMat.size(); ++i) {
+		distanceMatrix.push_back(disMat.at(i));
+	}
 }
 
 //copy constructor
+//this one has potential problem
 Tabusearch::Tabusearch(const Tabusearch& tabusrch) {
-	k = 2;
+	k = tabusrch.k;
+	numberOfRoutes = tabusrch.numberOfRoutes;
 	initialSolution = tabusrch.initialSolution;
 	incumbentSolution = tabusrch.incumbentSolution;
 	iterationBestSolution = tabusrch.iterationBestSolution;
+	distanceMatrix = tabusrch.distanceMatrix;
+	demandVector = tabusrch.demandVector;
+	tabuList = tabusrch.tabuList;
+	routCustomerMap = tabusrch.routCustomerMap;
+	listOfRoutes = tabusrch.listOfRoutes;
 }
 
 //updates incumbent solution
@@ -228,7 +261,6 @@ void Tabusearch::updateIncumbentSolution() {
 
 //generates routes and route to customers map
 void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
-	bool flag = false;
 	if (!routCustomerMap.empty())
 		routCustomerMap.clear();
 	if (!listOfRoutes.empty())
@@ -236,9 +268,10 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 	int routeID = 1;
 	int separatorIntVal = febSol.getSeparatorIntVal();
 	int size = febSol.getSolution().size();
-	std::vector<int> routeVector;
-	for (int i = 0; i < size; ++i) {
-		int val = febSol.getSolution().at(i);
+	std::list<int> routeVector;
+	bool flag = false;
+	for (auto it = febSol.getSolution().begin(); it != febSol.getSolution().end(); ++it) {
+		int val = *it;
 		if (val != separatorIntVal) {
 			routCustomerMap.insert(std::make_pair(routeID, val));
 			routeVector.push_back(val);
@@ -256,156 +289,139 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 	numberOfRoutes = routeID;
 }
 
-
-FeasibleSolution Tabusearch::generateNeighbour(std::list<std::vector<int>> newRoutes, double newCost, int sepInt, int addToRoute, int dropFromRoute, int dropNode) {
-	//generate neighbour solution by Add and Drop heuristic
-	int iterator = 1;
+//generate neighbour solution by Add and Drop heuristic
+FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>> newRoutes, double newCost, int sepInt, int addToRoute, int dropFromRoute, int dropNode) {
 	double currentAddRouteCost = 0.0;
 	double newAddRouteCost = 0.0;
 	double currentDropRouteCost = 0.0;
 	double newDropRouteCost = 0.0;
-	//generate feasible solution
-	for (auto iter = newRoutes.begin(); iter != newRoutes.end(); ++iter) {
+	int iterator = 1;
+	for (auto &iter : newRoutes) {
 		if (iterator == addToRoute) {
 			//calculate current Add Route cost
-			for (int j = 0; j < (*iter).size(); ++j) {
-				if (j == 0) {
-					currentAddRouteCost += distanceMatrix[0][(*iter).at(j)];
-				}
-				else {
-					currentAddRouteCost += distanceMatrix[(*iter).at(j - 1)][(*iter).at(j)];
-				}
+			int val = 0;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
+				currentAddRouteCost += distanceMatrix[val][(*it)];
+				val = *it;
 			}
-			currentAddRouteCost += distanceMatrix[(*iter).at((*iter).size() - 1)][0];
+			currentAddRouteCost += distanceMatrix[val][0];
 			//find the minimum cost entry position 
 			int l = 0;
+			int j = 0;
 			double cost = 0.0;
-			for (int j = 0; j < (*iter).size(); ++j) {
+			int vall = 0;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				if (j == 0) {
-					cost = currentAddRouteCost - distanceMatrix[0][(*iter).at(j)] + distanceMatrix[0][dropNode] + distanceMatrix[dropNode][(*iter).at(j)];
+					cost = currentAddRouteCost - distanceMatrix[0][(*it)] + distanceMatrix[0][dropNode] + distanceMatrix[dropNode][(*it)];
 					newAddRouteCost = cost;
 					l = j;
+					vall = *it;
+					j++;
 				}
 				else {
-					cost = currentAddRouteCost - distanceMatrix[(*iter).at(j - 1)][(*iter).at(j)] + distanceMatrix[(*iter).at(j - 1)][dropNode] + distanceMatrix[dropNode][(*iter).at(j)];
+					cost = currentAddRouteCost - distanceMatrix[vall][(*it)] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][(*it)];
 					if (cost < newAddRouteCost) {
 						newAddRouteCost = cost;
 						l = j;
 					}
+					j++;
+					vall = *it;
 				}
 			}
-			cost = currentAddRouteCost - distanceMatrix[(*iter).at((*iter).size())][0] + distanceMatrix[(*iter).at((*iter).size())][dropNode] + distanceMatrix[dropNode][0];
+			cost = currentAddRouteCost - distanceMatrix[vall][0] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][0];
 			if (cost < newAddRouteCost) {
 				newAddRouteCost = cost;
-				l = (*iter).size();
+				l = iter.size();
 			}
 			//update Add route  
-			auto& elm = *iter;
-			std::list<int> oldRoute;
-			for (int m = 0; m < (*iter).size(); ++m) {
-				oldRoute.push_back((*iter).at(m));
-			}
-			if (l == (*iter).size()) {
-				oldRoute.push_back(dropFromRoute);
+			int n = 0;
+			if(l==iter.size()){
+				iter.push_back(dropNode);			
 			}
 			else {
-				int n = 0;
-				for (auto oit = oldRoute.begin(); oit != oldRoute.end(); ++oit) {
+				for (auto it = iter.begin(); it != iter.end(); ++it) {
 					if (n == l) {
-						oldRoute.insert(oit, dropNode);
+						iter.insert(it, dropNode);
 						break;
 					}
 					n++;
 				}
 			}
-			elm.clear();
-			for (auto uit = oldRoute.begin(); uit != oldRoute.end(); ++uit)
-				elm.push_back(*uit);
 		}
 		if (iterator == dropFromRoute) {
 			//calculate current Drop Route cost
-			for (int j = 0; j < (*iter).size(); ++j) {
-				if (j == 0) {
-					currentDropRouteCost += distanceMatrix[0][(*iter).at(j)];
-				}
-				else {
-					currentDropRouteCost += distanceMatrix[(*iter).at(j - 1)][(*iter).at(j)];
-				}
+			int val = 0;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
+				currentDropRouteCost += distanceMatrix[val][(*it)];
+				val = *it;
 			}
-			currentDropRouteCost += distanceMatrix[(*iter).at((*iter).size() - 1)][0];
+			currentDropRouteCost += distanceMatrix[val][0];
 			//calculate updated Drop Route cost
 			int l = 0;
-			for (int j = 0; j < (*iter).size(); ++j) {
-				if ((*iter).size() == 1) {
+			int j = 0;
+			int vall = 0;
+			int preVal = 0;
+			int postVal = 0;
+			bool flag = false;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
+				if (iter.size() == 1) {
 					newDropRouteCost = 0.0;
+					iter.erase(it);
+					iter.push_back(sepInt+1);
 					break;
 				}
 				else {
-					if (j == 0 && (*iter).at(j) == dropNode) {
-						newDropRouteCost = currentDropRouteCost - distanceMatrix[0][(*iter).at(j)] - distanceMatrix[(*iter).at(j)][(*iter).at(j + 1)] + distanceMatrix[0][(*iter).at(j + 1)];
+					if (j == 0 && flag == false) {
+						vall = *it;
+					}
+					if (j >= 1 && flag == false) {
+						preVal = vall;
+						vall = *it;
+					}
+					if ((*it) == dropNode && flag == false) {
+						flag = true;
 						l = j;
+					}
+					if ((*it) != dropNode && flag == true) {
+						postVal = *it;
 						break;
 					}
-					else if (j == ((*iter).size() - 1) && (*iter).at(j) == dropNode) {
-						newDropRouteCost = currentDropRouteCost - distanceMatrix[(*iter).at(j - 1)][(*iter).at(j)] - distanceMatrix[(*iter).at(j)][0] + distanceMatrix[(*iter).at(j - 1)][0];
-						l = j;
-						break;
-					}
-					else if ((*iter).at(j) == dropNode) {
-						newDropRouteCost = currentDropRouteCost - distanceMatrix[(*iter).at(j - 1)][(*iter).at(j)] - distanceMatrix[(*iter).at(j)][(*iter).at(j + 1)] + distanceMatrix[(*iter).at(j - 1)][(*iter).at(j + 1)];
-						l = j;
-						break;
-					}
-					else
-						continue;
-				}
+					j++;
+				}					
+			}
+			if (iter.size() != 1) {
+				newDropRouteCost = currentDropRouteCost - distanceMatrix[preVal][vall] - distanceMatrix[vall][postVal] + distanceMatrix[preVal][postVal];
 			}
 			//update Drop route  
-			auto& elm = *iter;
-			std::list<int> oldRoute;
-			for (int m = 0; m < (*iter).size(); ++m) {
-				oldRoute.push_back((*iter).at(m));
-			}
-			int n = 0;
-			for (auto oit = oldRoute.begin(); oit != oldRoute.end(); ++oit) {
-				if (n == l) {
-					oldRoute.erase(oit);
-					break;
+			if (flag != false) {
+				int n = 0;
+				for (auto it = iter.begin(); it != iter.end(); ++it) {
+					if (n == l) {
+						iter.erase(it);
+						break;
+					}
+					n++;
 				}
-				n++;
-			}
-			elm.clear();
-			if (!oldRoute.empty()) {
-				for (auto uit = oldRoute.begin(); uit != oldRoute.end(); ++uit)
-					elm.push_back(*uit);
-			}
-			else {
-				elm.push_back(sepInt);//temporary! 
 			}
 		}
 		iterator += 1;
 	}
 	//generate solution vector
-	std::vector<int> solution;
+	std::list<int> solution;
 	for (auto iter = newRoutes.begin(); iter != newRoutes.end(); ++iter) {
-		for (int p = 0; p < (*iter).size(); ++p) {
-			solution.push_back((*iter).at(p));
+		for (auto it = (*iter).begin();  it != (*iter).end(); ++it) {
+			solution.push_back(*it);
 		}
 		solution.push_back(sepInt);
 	}
-	//update solution cost
-	newCost = newCost - currentAddRouteCost - currentAddRouteCost + newAddRouteCost + newDropRouteCost;
-	//new neighbour
-	FeasibleSolution neighbour(solution, newCost, sepInt);//need to return dropNode and dropFromRoute
+	newCost = newCost - currentAddRouteCost - currentDropRouteCost + newAddRouteCost + newDropRouteCost;
+	FeasibleSolution neighbour(solution, newCost, sepInt, dropFromRoute, dropNode);
 	return neighbour;
 }
 
 
 //generates Neighbour solutions
-//k-chain moves uses Add and Drop as well as 1-Swap methods
-void Tabusearch::generateKNeighbourSolutions() {
-	int numberOfCustomers = 10;	
-	int maxCapacity = 6;
+void Tabusearch::generateKChainNeighbourSolutions() {
 	Neighbourhood neighbourHood;
 	for (int i = 0; i < k; ++i) {//k for k chain
 		//generate route to customer map
@@ -414,7 +430,7 @@ void Tabusearch::generateKNeighbourSolutions() {
 		std::random_device rd; 
 		std::mt19937 gen(rd()); 
 		std::uniform_int_distribution<> distr(1, numberOfRoutes); 
-		int dropFromRoute = distr(gen);
+		int dropFromRoute = distr(gen);//need to exclude null routes
 		int addToRoute = distr(gen);
 		if (numberOfRoutes >= 2) {
 			while (dropFromRoute == addToRoute) {
@@ -437,14 +453,14 @@ void Tabusearch::generateKNeighbourSolutions() {
 						capacity += demandVector[(*iter).second];
 					}
 					capacity += demandVector[(*it).second];
-					if (capacity <= maxCapacity) {
+					if (capacity <= maxRouteCapacity) {
 						std::cout << "The capacity constraint is satisfied!" << std::endl;
 						//generate neighbour solution by Add and Drop heuristic
-						std::list<std::vector<int>> newRoutes = listOfRoutes;
+						std::list<std::list<int>> newRoutes = listOfRoutes;
 						double newCost = iterationBestSolution.getCost();
 						int sepInt = iterationBestSolution.getSeparatorIntVal();
 						int dropNode = (*it).second;
-						FeasibleSolution neighbour = generateNeighbour(newRoutes, newCost, sepInt, addToRoute, dropFromRoute, dropNode);
+						FeasibleSolution neighbour = generateNeighbourByAddDrop(newRoutes, newCost, sepInt, addToRoute, dropFromRoute, dropNode);
 						neighbourHood.insertToNeighbour(neighbour);		
 					}
 					else {
@@ -465,14 +481,14 @@ void Tabusearch::generateKNeighbourSolutions() {
 					capacity += demandVector[(*iter).second];
 				}
 				capacity += demandVector[(*it).second];
-				if (capacity <= maxCapacity) {
+				if (capacity <= maxRouteCapacity) {
 					std::cout << "The capacity constraint is satisfied!" << std::endl;
 					//generate neighbour solution by Add and Drop heuristic
-					std::list<std::vector<int>> newRoutes = listOfRoutes;
+					std::list<std::list<int>> newRoutes = listOfRoutes;
 					double newCost = iterationBestSolution.getCost();
 					int sepInt = iterationBestSolution.getSeparatorIntVal();
 					int dropNode = (*it).second;
-					FeasibleSolution neighbour = generateNeighbour(newRoutes, newCost, sepInt, addToRoute, dropFromRoute, dropNode);
+					FeasibleSolution neighbour = generateNeighbourByAddDrop(newRoutes, newCost, sepInt, addToRoute, dropFromRoute, dropNode);
 					neighbourHood.insertToNeighbour(neighbour);
 				}
 			}
@@ -489,7 +505,7 @@ void Tabusearch::tabuSearchRun(FeasibleSolution febSol) {
 	AspirationCriteria aspCria;
 	initialSolution = febSol;
 	for (int i = 0; i < MaxIter; ++i) {
-		generateKNeighbourSolutions();
+		generateKChainNeighbourSolutions();
 		updateIncumbentSolution();
 	}
 }
