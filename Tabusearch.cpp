@@ -35,15 +35,20 @@ std::multimap<int, int> TabuList::getTabuList(){
 //checks whether a move is in the list
 bool TabuList::checkInTabuList(int routeNum, int customerID) {
 	bool flag = false;
-	auto itlow = tabuList.lower_bound(routeNum);  
-	auto itup = tabuList.upper_bound(routeNum);   
-	if (itlow != tabuList.end())
-		for (auto &it = itlow; it != itup; it++) {
-			if ((*it).second == customerID)
-				return flag = true;
+	if (!tabuList.empty()) {
+		auto itlow = tabuList.lower_bound(routeNum);
+		auto itup = tabuList.upper_bound(routeNum);
+		if (itlow != tabuList.end()) {
+			for (auto& it = itlow; it != itup; it++) {
+				if ((*it).second == customerID) {
+					flag = true;
+					break;
+				}
+
+			}
 		}
-	else
-		return flag;	
+	}
+	return flag;	
 }
 
 //default constructor
@@ -139,16 +144,17 @@ int FeasibleSolution::getAddedNode() {
 
 // copy constructor
 Neighbourhood::Neighbourhood(const Neighbourhood& neighbour) {
+	Neighbourhood neighHood;
 	if (!neighbour.neighbourSolution.empty()) {
 		for (auto it : neighbour.neighbourSolution)
-			neighbourSolution.push_back(it);
+			neighHood.neighbourSolution.push_back(it);
 	}
 	else
 		std::cout << "The neighbourhood solution is empty! The copy constructor fails." << std::endl;
 
 	if (!neighbour.kNeighbourSolution.empty()) {
 		for (auto it : neighbour.kNeighbourSolution)
-			kNeighbourSolution.push_back(it);
+			neighHood.kNeighbourSolution.push_back(it);
 	}
 	else
 		std::cout << "The K neighbourhood solution is empty! The copy constructor fails." << std::endl;
@@ -225,7 +231,7 @@ FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
 
 
 //default constructor
-Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<int>> disMat) {
+Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat) {
 	k = 2;
 	numberOfRoutes = 0;
 	maxRouteCapacity = 10;
@@ -233,7 +239,7 @@ Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std:
 	for (int i = 0; i < demandVec.size(); ++i) {
 		demandVector.push_back(demandVec.at(i));
 	}
-	for (int i = 0; i < disMat.size(); ++i) {
+	for (double i = 0; i < disMat.size(); ++i) {
 		distanceMatrix.push_back(disMat.at(i));
 	}
 }
@@ -270,7 +276,8 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 	int size = febSol.getSolution().size();
 	std::list<int> routeVector;
 	bool flag = false;
-	for (auto it = febSol.getSolution().begin(); it != febSol.getSolution().end(); ++it) {
+	std::list<int> solution = febSol.getSolution();
+	for (auto it = solution.begin(); it != solution.end(); ++it) {
 		int val = *it;
 		if (val != separatorIntVal) {
 			routCustomerMap.insert(std::make_pair(routeID, val));
@@ -419,7 +426,147 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 	return neighbour;
 }
 
+//associating cost with each route would speed up the computation
+FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>> newRoutes, double newCost, int sepInt, int firstRoute, int secondRoute) {
+	double currentFirstRouteCost = 0.0;
+	double currentSecondRouteCost = 0.0;
+	//new route vectors
+	std::vector<int> firstRt;
+	std::vector<int> secondRt;
+	int iterator = 1;
+	for (auto &iter : newRoutes) {
+		if (iterator == firstRoute) {
+			int val = 0;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
+				currentFirstRouteCost += distanceMatrix[val][(*it)];
+				val = *it;
+				firstRt.push_back(val);
+			}
+			currentFirstRouteCost += distanceMatrix[val][0];			
+		}
+		if (iterator == secondRoute) {
+			int val = 0;
+			for (auto it = iter.begin(); it != iter.end(); ++it) {
+				currentSecondRouteCost += distanceMatrix[val][(*it)];
+				val = *it;
+				secondRt.push_back(val);
+			}
+			currentSecondRouteCost += distanceMatrix[val][0];			
+		}
+		iterator += 1;
+	}
+	//find out minimum cost swap pair
+	double firstCost = 0;
+	double secondCost = 0;
+	double cost = 0;
+	struct SwapInfo {
+		int firstNodeLocation = 0;
+		int secondNodeLocation = 0;
+		int firstNode = 0;
+		int secondNode = 0;
+		double finalCost = 0;
+		double newFirstRouteCost = 0.0;
+		double newSecondRouteCost = 0.0;
+		void updateSwapInfo(int fstNodeL, int sndNodeL, int fstNode, int sndNode, double finlCost, double newFstRtCost, double newSndRtCost) {
+			firstNodeLocation = fstNodeL;
+			secondNodeLocation = sndNodeL;
+			firstNode = fstNode;
+			secondNode = sndNode;
+			finalCost = finlCost;
+			newFirstRouteCost = newFstRtCost;
+			newSecondRouteCost = newSndRtCost;
+		}
+	};
+	SwapInfo swapInfo;
+	swapInfo.finalCost = currentFirstRouteCost + currentSecondRouteCost;
+	int firstPreVal = 0;
+	int firstPostVal = 0;
+	int secondPreVal = 0;
+	int secondPostVal = 0;
+	//n^2 computational complexity
+	for (int i = 0; i < firstRt.size(); ++i) {
+		for (int j = 0; j < secondRt.size(); ++j) {
+			if (firstRt.size() ==1) {
+				firstPreVal = 0;
+				firstPostVal = 0;
+			}
+			if (secondRt.size() == 1) {
+				secondPreVal = 0;
+				secondPostVal = 0;
+			}
+			if (firstRt.size() > 1 && i==0) {
+				firstPreVal = 0;
+				firstPostVal = firstRt.at(i+1);
+			}
+			if (firstRt.size() > 1 && i == (firstRt.size()-1)) {
+				firstPreVal = firstRt.at(i - 1);
+				firstPostVal = 0;
+			}
+			if (firstRt.size() > 1 && i < (firstRt.size() - 1) && i > 0) {
+				firstPreVal = firstRt.at(i - 1);
+				firstPostVal = firstRt.at(i + 1);
+			}
+			if (secondRt.size() > 1 && j == 0) {
+				secondPreVal = 0;
+				secondPostVal = secondRt.at(j + 1);
+			}
+			if (secondRt.size() > 1 && j == (secondRt.size() - 1)) {
+				secondPreVal = secondRt.at(j - 1);
+				secondPostVal = 0;
+			}
+			if (secondRt.size() > 1 && j < (secondRt.size() - 1) && j > 0) {
+				secondPreVal = secondRt.at(j - 1);
+				secondPostVal = secondRt.at(j + 1);
+			}
+			firstCost = currentFirstRouteCost - double(distanceMatrix[firstPreVal][firstRt.at(i)]) - double(distanceMatrix[firstRt.at(i)][firstPostVal]) + double(distanceMatrix[firstPreVal][secondRt.at(j)]) + double(distanceMatrix[secondRt.at(j)][firstPostVal]);
+			secondCost = currentSecondRouteCost - double(distanceMatrix[secondPreVal][secondRt.at(j)]) - double(distanceMatrix[secondRt.at(j)][secondPostVal]) + double(distanceMatrix[secondPreVal][firstRt.at(i)]) + double(distanceMatrix[firstRt.at(i)][secondPostVal]);
+			cost = firstCost + secondCost;
+			if (cost < swapInfo.finalCost) {
+				swapInfo.updateSwapInfo(i, j, firstRt.at(i), secondRt.at(j), cost, firstCost, secondCost);
+			}
+		}
+	}
+	//update routes and generate new solution
+	std::list<int> solution;
+	iterator = 1;
+	for (auto &iter : newRoutes) {
+		if (iterator == firstRoute) {
+			int i = 0;
+			for (auto& it : iter) {
+				if (i == swapInfo.firstNodeLocation && swapInfo.firstNode == it) {
+					it = swapInfo.secondNode;
+				}
+				solution.push_back(it);
+				i++;
+			}
+		}
+		else if (iterator == secondRoute) {
+			int j = 0;
+			for (auto& it : iter) {
+				if (j == swapInfo.secondNodeLocation && swapInfo.secondNode == it) {
+					it = swapInfo.firstNode;
+				}
+				solution.push_back(it);
+				j++;
+			}
+		}
+		else {
+			for (auto& it : iter) {
+				solution.push_back(it);
+			}
+		} 
+		solution.push_back(sepInt);
+		iterator += 1;
+	}
+	newCost = newCost - currentFirstRouteCost - currentSecondRouteCost + swapInfo.newFirstRouteCost + swapInfo.newSecondRouteCost;
+	FeasibleSolution neighbour(solution, newCost, sepInt, firstRoute, swapInfo.firstNode);
+	return neighbour;
+}
 
+
+
+
+//if possible use reference to avoid creating local copy!
 //generates Neighbour solutions
 void Tabusearch::generateKChainNeighbourSolutions() {
 	Neighbourhood neighbourHood;

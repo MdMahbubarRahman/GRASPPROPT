@@ -127,7 +127,7 @@ private:
 	int numberOfRoutes;
 	int maxRouteCapacity;
 	std::vector<int> demandVector;
-	std::vector<std::vector<int>> distanceMatrix;
+	std::vector<std::vector<double>> distanceMatrix;
 	TabuList tabuList;
 	FeasibleSolution initialSolution;//input solution to the tabu search algoirthm
 	FeasibleSolution incumbentSolution;//current best solution
@@ -135,11 +135,12 @@ private:
 	std::multimap<int, int> routCustomerMap;
 	std::list<std::list<int>> listOfRoutes;
 public:	
-	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<int>> disMat);//default constructor
+	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat);//default constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);
 	FeasibleSolution generateNeighbourByAddDrop(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int addToRoute, int dropFromRoute, int dropNode);
+	FeasibleSolution generateNeighbourByOneSwap(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int firstRoute, int secondRoute);
 	void generateKChainNeighbourSolutions();//k-chain moves uses Add and Drop method
 	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
