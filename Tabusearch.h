@@ -63,6 +63,7 @@ private:
 	std::multimap<int, int> tabuList;
 public:
 	TabuList(); 
+	TabuList(const TabuList & tbList);
 	TabuList(int routeNum, int customerID);
 	void showTabuList() const;
 	void addToTabuList(int routeNum, int customerID);
@@ -77,8 +78,10 @@ private:
 	double currentBestCost;
 public:
 	AspirationCriteria();
+	AspirationCriteria(const AspirationCriteria & aspCriteria);
 	void updateCurrentBestCost(double cost);
-	double showCurrentBestCost();
+	void showCurrentBestCost();
+	double getCurrentBestCost();
 };
 
 

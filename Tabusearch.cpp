@@ -2,11 +2,19 @@
 
 
 //default constructor
-TabuList::TabuList() {}
+TabuList::TabuList() {
+	std::cout << "The default constructor of the tabu list has been called!" << std::endl;
+}
 
 //constructor
 TabuList::TabuList(int routeNum, int customerID) {
 	tabuList.insert(std::make_pair(routeNum, customerID));
+}
+
+//copy constructor
+TabuList::TabuList(const TabuList & tbList) {
+	std::cout << "The copy constructor of the TabuList class has been called!" << std::endl;
+	tabuList = tbList.tabuList;
 }
 
 //shows content of the tabulist
@@ -53,7 +61,14 @@ bool TabuList::checkInTabuList(int routeNum, int customerID) {
 
 //default constructor
 AspirationCriteria::AspirationCriteria() {
+	std::cout << "The default constructor of the Aspiration Criteria class has been called!" << std::endl;
 	currentBestCost = 100000000.0;//Big number
+}
+
+//copoy constructor
+AspirationCriteria::AspirationCriteria(const AspirationCriteria& aspCriteria) {
+	std::cout << "The copy constructor of the aspiration criteria class has been called!" << std::endl;
+	currentBestCost = aspCriteria.currentBestCost;
 }
 
 //updates aspiration criteria
@@ -63,13 +78,17 @@ void AspirationCriteria::updateCurrentBestCost(double cost) {
 }
 
 //shows current aspiration criteria
-double AspirationCriteria::showCurrentBestCost() {
-	return currentBestCost;
+void AspirationCriteria::showCurrentBestCost() {
+	std::cout << currentBestCost << std::endl;
+}
+
+double AspirationCriteria::getCurrentBestCost() {
+	return currentBestCost;;
 }
 
 //default constructor
 FeasibleSolution::FeasibleSolution() {
-	solution.push_back(0);
+	std::cout << "The default constructor of the FeasibleSolution class has been called!" << std::endl;
 }
 
 //constructor
@@ -79,9 +98,7 @@ FeasibleSolution::FeasibleSolution(std::list<int> sol, double cost, int sepIntVa
 	sourceRoute		 = srcRoute;
 	addedNode		 = addNode;
 	if (!sol.empty())
-		for (auto it = sol.begin(); it != sol.end(); ++it) {
-			solution.push_back(*it);
-		}
+		solution = sol;
 	else {
 		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
 	}	
@@ -94,9 +111,7 @@ FeasibleSolution::FeasibleSolution(const FeasibleSolution & febSol) {
 	sourceRoute	    = febSol.sourceRoute;
 	addedNode	    = febSol.addedNode;
 	if (!febSol.solution.empty())
-		for (auto it = febSol.solution.begin(); it != febSol.solution.end(); ++it) {
-			solution.push_back(*it);
-		}
+		solution = febSol.solution;
 	else {
 		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
 	}
@@ -144,17 +159,14 @@ int FeasibleSolution::getAddedNode() {
 
 // copy constructor
 Neighbourhood::Neighbourhood(const Neighbourhood& neighbour) {
-	Neighbourhood neighHood;
 	if (!neighbour.neighbourSolution.empty()) {
-		for (auto it : neighbour.neighbourSolution)
-			neighHood.neighbourSolution.push_back(it);
+		neighbourSolution = neighbour.neighbourSolution;
 	}
 	else
 		std::cout << "The neighbourhood solution is empty! The copy constructor fails." << std::endl;
 
 	if (!neighbour.kNeighbourSolution.empty()) {
-		for (auto it : neighbour.kNeighbourSolution)
-			neighHood.kNeighbourSolution.push_back(it);
+		kNeighbourSolution = neighbour.kNeighbourSolution;
 	}
 	else
 		std::cout << "The K neighbourhood solution is empty! The copy constructor fails." << std::endl;
@@ -168,7 +180,7 @@ void Neighbourhood::insertToNeighbour(FeasibleSolution neighbour) {
 //inserts neighbour solutions to the kneighbour solution list
 void Neighbourhood::insertToKNeighbour() {
 	if (!neighbourSolution.empty()) {
-		for (auto it : neighbourSolution) {
+		for (const auto &it : neighbourSolution) {
 			kNeighbourSolution.push_back((it));
 		}
 		neighbourSolution.clear();
@@ -245,7 +257,6 @@ Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std:
 }
 
 //copy constructor
-//this one has potential problem
 Tabusearch::Tabusearch(const Tabusearch& tabusrch) {
 	k = tabusrch.k;
 	numberOfRoutes = tabusrch.numberOfRoutes;
