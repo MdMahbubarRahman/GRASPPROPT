@@ -115,9 +115,11 @@ public:
 	Neighbourhood() {}//default constructor
 	Neighbourhood(const Neighbourhood & neighbour);// copy constructor
 	void insertToNeighbour(FeasibleSolution febSolution);
-	void insertToKNeighbour();//call of this function makes the neighbourSolution list empty
+	void insertToKNeighbour();
 	void showNeighbours();
 	void showKNeighbours();
+	std::list<FeasibleSolution> getNeighbourSolutions();
+	std::list<FeasibleSolution> getKNeighbourSolutions();
 	FeasibleSolution getBestFromNeighbour();
 	FeasibleSolution getBestFromKNeighbour();
 };
@@ -126,6 +128,8 @@ public:
 class Tabusearch{
 private:
 	int k;// k for k-chain
+	int dropFromRoute;
+	int addToRoute;
 	int numberOfRoutes;
 	int maxRouteCapacity;
 	std::vector<int> demandVector;
@@ -136,15 +140,19 @@ private:
 	FeasibleSolution iterationBestSolution;//output solution from the tabu search algoirthm
 	std::multimap<int, int> routCustomerMap;
 	std::list<std::list<int>> listOfRoutes;
+	Neighbourhood neighbourHood;
+	AspirationCriteria aspCriteria;
 public:	
 	Tabusearch();//default constructor
 	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int maxRouteCapacity);//constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);
+	void selectRandomAddAndDropRoutes();
 	FeasibleSolution generateNeighbourByAddDrop(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int addToRoute, int dropFromRoute, int dropNode);
 	FeasibleSolution generateNeighbourByOneSwap(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int firstRoute, int secondRoute);
 	void generateKChainNeighbourSolutions();//k-chain moves uses Add and Drop method
+	void generateOneSwapSolutions();
 	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
 	FeasibleSolution getInitialSolution();
@@ -154,6 +162,9 @@ public:
 	std::list<std::list<int>> getListOfRoutes();
 	TabuList getTabuList();
 	int getNumberOfRoutes();
+	Neighbourhood getNeighbourHood();
+	AspirationCriteria getAspirationCriteria();
+	void printTabuSolution();
 };
 
 
