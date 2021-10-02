@@ -120,11 +120,11 @@ FeasibleSolution::FeasibleSolution(const FeasibleSolution & febSol) {
 //prints the feasible solution object
 void FeasibleSolution::showSolution() const {
 	if (!solution.empty()) {
-		std::cout << "The solution is : " << std::endl;
+		std::cout << "The solution is : ";
 		for (const auto& iter : solution) {
-			std::cout << iter << ", "; 
+			std::cout << iter << " "; 
 		}
-		std::cout << std::endl;
+		std::cout <<";"<< std::endl;
 		std::cout << "The cost of the solution is : "<< solCost <<std::endl;
 		std::cout << "The separtor interger value is : " << separatorIntVal << std::endl;
 		std::cout << "The added Node is : " << addedNode << std::endl;
@@ -162,14 +162,16 @@ Neighbourhood::Neighbourhood(const Neighbourhood& neighbour) {
 	if (!neighbour.neighbourSolution.empty()) {
 		neighbourSolution = neighbour.neighbourSolution;
 	}
-	else
+	else {
 		std::cout << "The neighbourhood solution is empty! The copy constructor fails." << std::endl;
-
+	}
+		
 	if (!neighbour.kNeighbourSolution.empty()) {
 		kNeighbourSolution = neighbour.kNeighbourSolution;
 	}
-	else
+	else {
 		std::cout << "The K neighbourhood solution is empty! The copy constructor fails." << std::endl;
+	}
 }
 
 //inserts a new neighbour/solution
@@ -186,78 +188,100 @@ void Neighbourhood::insertToKNeighbour() {
 		neighbourSolution.clear();
 	}
 	else {
-		std::cout << "The neighbour solution list is empty!" << std::endl;
+		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
 	}	
 }
 
 //shows neighbouring solutions
 void Neighbourhood::showNeighbours() {
+	int i = 1;
 	if (!neighbourSolution.empty()) {
-		for (const auto &it : neighbourSolution) {
+		std::cout << "\nThe neighbouring solutions are : " << std::endl;
+		for (const auto& it : neighbourSolution) {
+			std::cout << "Solution no : " << i << std::endl;
 			it.showSolution();
+			i++;
 		}
 	}
+	else {
+		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
+	}	
 }
 
 //shows all k neighbour solutions
 void Neighbourhood::showKNeighbours() {
+	int i = 1;
 	if (!kNeighbourSolution.empty()) {
+		std::cout << "\nThe k neighbour solutions are : " << std::endl;
 		for (const auto &it : kNeighbourSolution) {
+			std::cout << "Solution no : " << i << std::endl;
 			it.showSolution();
+			i++;
 		}
 	}
+	else {
+		std::cout << "\nThe k neighbour solution list is empty!" << std::endl;
+	}	
 }
 
 //returns the best solution from the neighbourhood
 FeasibleSolution Neighbourhood::getBestFromNeighbour() {
 	double cost = 10000000.0;
-	std::list<FeasibleSolution>::iterator iter;
+	FeasibleSolution iter;
 	if (!neighbourSolution.empty()) {
-		for (auto it = neighbourSolution.begin(); it != neighbourSolution.end(); ++it) {
-			if ((*it).getCost() < cost) {
-				cost = (*it).getCost();
+		for (auto& it : neighbourSolution) {
+			if (it.getCost() < cost) {
+				cost = it.getCost();
 				iter = it;
-			}	
+			}
 		}
-		(*iter).showSolution();
 	}
-	return (*iter);
+	else {
+		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
+	}	
+	return iter;
 }
 
 //returns the best solution from the K neighbourhood
 //linear search method implemented, could be better by heap implementation
 FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
 	double cost = 10000000.0;
-	std::list<FeasibleSolution>::iterator iter;
+	FeasibleSolution iter;
 	if (!kNeighbourSolution.empty()) {
-		for (auto it = kNeighbourSolution.begin(); it != kNeighbourSolution.end(); ++it) {
-			if ((*it).getCost() < cost) {
-				cost = (*it).getCost();
+		for (auto & it : kNeighbourSolution) {
+			if (it.getCost() < cost) {
+				cost = it.getCost();
 				iter = it;
 			}
 		}
-		(*iter).showSolution();
 	}
-	return (*iter);
+	else {
+		std::cout << "\nThe k neighbour solution list is empty!" << std::endl;
+	}
+	return iter;
 }
 
 
 //default constructor
-Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat) {
+Tabusearch::Tabusearch() {
+	std::cout << "The default tabu search constructor has been called!" << std::endl;
 	k = 2;
-	numberOfRoutes = 0;
+	numberOfRoutes = 1;
 	maxRouteCapacity = 10;
+}
 
-	for (int i = 0; i < demandVec.size(); ++i) {
-		demandVector.push_back(demandVec.at(i));
-	}
-	for (double i = 0; i < disMat.size(); ++i) {
-		distanceMatrix.push_back(disMat.at(i));
-	}
+//constructor
+Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int maxCapacity) {
+	k = kChain;
+	numberOfRoutes = 1;
+	maxRouteCapacity = maxCapacity;
+	demandVector = demandVec;
+	distanceMatrix = disMat;
 }
 
 //copy constructor
-Tabusearch::Tabusearch(const Tabusearch& tabusrch) {
+Tabusearch::Tabusearch(const Tabusearch & tabusrch) {
+	std::cout << "The TabuSearch copy constructor has been called!" << std::endl;
 	k = tabusrch.k;
 	numberOfRoutes = tabusrch.numberOfRoutes;
 	initialSolution = tabusrch.initialSolution;
@@ -284,15 +308,13 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 		listOfRoutes.clear();
 	int routeID = 1;
 	int separatorIntVal = febSol.getSeparatorIntVal();
-	int size = febSol.getSolution().size();
 	std::list<int> routeVector;
 	bool flag = false;
 	std::list<int> solution = febSol.getSolution();
 	for (auto it = solution.begin(); it != solution.end(); ++it) {
-		int val = *it;
-		if (val != separatorIntVal) {
-			routCustomerMap.insert(std::make_pair(routeID, val));
-			routeVector.push_back(val);
+		if (*it != separatorIntVal) {
+			routCustomerMap.insert(std::make_pair(routeID, *it));
+			routeVector.push_back(*it);
 			flag = true;
 		}
 		else {
@@ -304,7 +326,7 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 			}
 		}	
 	}
-	numberOfRoutes = routeID;
+	numberOfRoutes = (routeID-1);
 }
 
 //generate neighbour solution by Add and Drop heuristic
@@ -575,9 +597,6 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 }
 
 
-
-
-//if possible use reference to avoid creating local copy!
 //generates Neighbour solutions
 void Tabusearch::generateKChainNeighbourSolutions() {
 	Neighbourhood neighbourHood;
@@ -673,3 +692,37 @@ void Tabusearch::performTspHeuristics() {
 
 }
 
+//returns initial solution
+FeasibleSolution Tabusearch::getInitialSolution() {
+	return initialSolution;
+}
+
+//returns incumbent solution
+FeasibleSolution Tabusearch::getIncumbentSolution() {
+	return incumbentSolution;
+}
+
+//returns iteration best solution
+FeasibleSolution Tabusearch::getIterationBestSolution() {
+	return iterationBestSolution;
+}
+
+//returns route to customer map
+std::multimap<int, int> Tabusearch::getRoutCustomerMap() {
+	return routCustomerMap;
+}
+
+//returns list of routes
+std::list<std::list<int>> Tabusearch::getListOfRoutes() {
+	return listOfRoutes;
+}
+
+//returns tabu list
+TabuList Tabusearch::getTabuList() {
+	return tabuList;
+}
+
+//returns number of routes
+int Tabusearch::getNumberOfRoutes() {
+	return numberOfRoutes;
+}

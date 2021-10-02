@@ -114,7 +114,6 @@ private:
 public:
 	Neighbourhood() {}//default constructor
 	Neighbourhood(const Neighbourhood & neighbour);// copy constructor
-	//Neighbourhood operator=(const Neighbourhood & neighHood) const;//operator= overloading
 	void insertToNeighbour(FeasibleSolution febSolution);
 	void insertToKNeighbour();//call of this function makes the neighbourSolution list empty
 	void showNeighbours();
@@ -138,7 +137,8 @@ private:
 	std::multimap<int, int> routCustomerMap;
 	std::list<std::list<int>> listOfRoutes;
 public:	
-	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat);//default constructor
+	Tabusearch();//default constructor
+	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int maxRouteCapacity);//constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);
@@ -147,6 +147,13 @@ public:
 	void generateKChainNeighbourSolutions();//k-chain moves uses Add and Drop method
 	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
+	FeasibleSolution getInitialSolution();
+	FeasibleSolution getIncumbentSolution();
+	FeasibleSolution getIterationBestSolution();
+	std::multimap<int, int> getRoutCustomerMap();
+	std::list<std::list<int>> getListOfRoutes();
+	TabuList getTabuList();
+	int getNumberOfRoutes();
 };
 
 
