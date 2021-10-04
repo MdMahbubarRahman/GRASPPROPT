@@ -4,8 +4,9 @@
 #include <list>
 #include <random>
 #include <array>
+#include <chrono>
 
-
+using namespace std::chrono;
 #ifndef TABUSEARCH_H
 #define TABUSEARCH_H
 
@@ -127,7 +128,8 @@ public:
 
 class Tabusearch{
 private:
-	int k;// k for k-chain
+	int kChain;// k for k-chain
+	int swapChain;
 	int dropFromRoute;
 	int addToRoute;
 	int numberOfRoutes;
@@ -144,7 +146,7 @@ private:
 	AspirationCriteria aspCriteria;
 public:	
 	Tabusearch();//default constructor
-	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int maxRouteCapacity);//constructor
+	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int swapChain, int maxRouteCapacity);//constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);
@@ -153,7 +155,7 @@ public:
 	FeasibleSolution generateNeighbourByOneSwap(std::list<std::list<int>> listOfRoutes, double cost, int separatorInt, int firstRoute, int secondRoute);
 	void generateKChainNeighbourSolutions();//k-chain moves uses Add and Drop method
 	void generateOneSwapSolutions();
-	void tabuSearchRun(FeasibleSolution febSol);//This is the function that will perform the tabu search
+	void runTabuSearch();//This is the function that will perform the tabu search
 	void performTspHeuristics();//perform this to improve the incumbent solution.
 	FeasibleSolution getInitialSolution();
 	FeasibleSolution getIncumbentSolution();
@@ -164,7 +166,7 @@ public:
 	int getNumberOfRoutes();
 	Neighbourhood getNeighbourHood();
 	AspirationCriteria getAspirationCriteria();
-	void printTabuSolution();
+	void showTabuSolution();
 };
 
 
