@@ -22,17 +22,62 @@ More knowledge to develop above functions and algorithms can be found from follo
 	3. Active guided evolution strategies for large-scale vehicle routing problems with time windows by D Mester, O Bräysy 
 */
 
+
+//class for elitism operator
+class Elitism {
+
+public:
+	Elitism();//default constructor
+	Elitism(const Elitism & elit);//copy constructor
+};
+
+//class for replication operator
+class Replication {
+
+public:
+	Replication();//default constructor
+	Replication(const Replication & replica);//copy constructor
+};
+
+//class for cross over operator
+class CrossOver {
+
+public:
+	CrossOver();//default constructor
+	CrossOver(const CrossOver & crossr);//copy constructor
+};
+
+//class for mutation operator
+class Mutation {
+
+public:
+	Mutation();//default constructor
+	Mutation(const Mutation & mutatn);//copy constructor
+
+};
+
+//class for a gereration of population
+class Generation {
+
+public:
+	Generation();//default constructor
+	Generation(const Generation & gentn);//copy constructor
+};
+
+//class for tournament
+class Tournament {
+
+public:
+	Tournament();//default constructor
+	Tournament(const Tournament & tourmnt);//copy constructor
+};
+
+//class for genetic algorithm
 class Geneticalgorithm{
-	public:
-		Geneticalgorithm();
-		Geneticalgorithm(int, std::string);
 
-		std::string show_name();
-		int show_number();
-
-	private:
-		int number;
-		std::string name;
+public:
+	Geneticalgorithm();//default constructor
+	Geneticalgorithm(const Geneticalgorithm & ga);//copy constructor	
 };
 
 
