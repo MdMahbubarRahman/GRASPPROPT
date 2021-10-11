@@ -1,11 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <map>
+#include <queue>
+#include <iterator>
+#include <cmath>
+
+#include "Tabusearch.h"
 
 #ifndef GENETICALGOIRTHM_H
 #define GENETICALGOIRTHM_H
-
-
 
 /*
 TODO:Based on "EVE-OPT: a hybrid algorithm for the capacitated vehicle routing problem"
@@ -30,130 +34,138 @@ chromosomes randomly generated. During the whole evolutionary process the popula
 */
 
 //chromosome
-//chromosomes are fixed size
 class Chromosome {
 private:
-	std::list<int> chromosome;
+	std::vector<int> chromosome;
 	double fitness;
-	int separatorInt;
+	int sepInt;
 	bool isFeasible;
-	double reProductionProbability;
-	double reInsertionProbabililty;
-	double mutationProbability;
-	int size;//size of the chromosome 
+	int maxRouteCapacity;
 public:
-	Chromosome();//default constructor
-	Chromosome(const Chromosome & chrom);//copy constructor
-	std::list<int> getChromosome();
+	Chromosome();
+	Chromosome(const Chromosome & chrom);
+	Chromosome(std::vector<int> chromosome,	double fitness,	int sepInt,	bool isFeasible, int maxRouteCapacity);
+	std::vector<int> getChromosomeRepresentation();
 	double getFitness();
-	void showFitness();
 	int getSize();
-	void updateSize(int size);
-	void updateToFeasibleChromosome();
-	int getSeparatorInt();
-	void showSeparatorInt();
+	int getSepInt();
 	bool getFeasibilityStatus();
-	void checkFeasiblity();
-	double getReproductionProbability();
-	double getReinsertionProbability();
-	double getMutationProbability();
-	void updateMutationProbability();
-	void updateReproductionAndReinsertionProbabilities();
+	int getMaxRouteCapacity();
+	void showChromosome();
+	void updateToFeasibleChromosome(std::vector<int> demand, std::vector<std::vector<double>> distance);
 };
 
 
-
-//class for elitism operator
-class Elitism {
-	Chromosome elit;
-public:
-	Elitism();//default constructor
-	Elitism(const Elitism & elit);//copy constructor
-};
-
-//class for replication operator
-class Replication {
-	Chromosome replica;
-public:
-	Replication();//default constructor
-	Replication(const Replication & replica);//copy constructor
-};
-
-//class for cross over operator
+//cross over operator
 class CrossOver {
 private:
 	Chromosome parent1;
 	Chromosome parent2;
 	Chromosome offspring;
 public:
-	CrossOver();//default constructor
-	CrossOver(const CrossOver & crossr);//copy constructor
-	void performPertiallyMappedCrossover();
+	CrossOver();
+	CrossOver(const CrossOver & crossr);
+	CrossOver(Chromosome parent1, Chromosome parent2);
 	void showParent1();
 	void showParent2();
 	void showOffspring();
 	Chromosome getParent1();
 	Chromosome getParent2();
 	Chromosome getOffspring();
+	void performPertiallyMappedCrossover(std::vector<int> demand, std::vector<std::vector<double>> distance);
 };
 
-//class for mutation operator
+
+//mutation operator
 class Mutation {
 	Chromosome originalChrom;
 	Chromosome mutatedChrom;
 public:
-	Mutation();//default constructor
-	Mutation(const Mutation & mutatn);//copy constructor
+	Mutation();
+	Mutation(const Mutation & mutatn);
+	Mutation(Chromosome originalChrom);
 	Chromosome getOriginalChromosome();
-	Chromosome getMutatedChromosome();
+	Chromosome getMutatedOffspring();
 	void showOriginalChromosome();
 	void showMutatedChromosome();
+	void performChainMutation(std::vector<int> demand, std::vector<std::vector<double>> distance);
+}; 
+
+
+//comparator for reproduction probability
+class Comparator {
+public:
+	bool operator()(Chromosome &a, Chromosome &b);
+};
+
+//population of chromosomes
+class Population {
+	int populationSize;
+	int numberOfNodes;
+	int depotNode;
+	int capacityLimit;
+	int kChainLength;
+	int sWapLength;
+	std::vector<int> demand;
+	std::vector<std::vector<double>> distance;
+	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> population;
+	Chromosome offspring;
+	Chromosome populationBest;
+	Chromosome crossOverChild;
+	Chromosome mutationChild;
+public:
+	Population();
+	Population(const Population & poplatn);
+	Population(int populationSize,	int numberOfNodes,	int depotNode,	int capacityLimit,	int kChainLength,	int sWapLength, std::vector<int> demand, std::vector<std::vector<double>> distance);
+	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> getPopulation();
+	Chromosome getOffspring();
+	Chromosome getCrossOverChild();
+	Chromosome getMutationChild();
+	Chromosome getBestChromosome();
+	Chromosome generateRandomChromosome();
+	void populatePopulation();
+	void showPopulation();
+	void updatePopulationWithOffspring();
+	void manageClones();
+	void performCrossOver();
 	void performMutation();
 };
 
-//class for a of population
-class Population {
-	std::list<std::list<int>> population;
-public:
-	Population();//default constructor
-	Population(const Population & poplatn);//copy constructor
-	std::list<std::list<int>> getPopulation();
-	void showPopulation();
-};
+//tournament
 
-//class for tournament
-class Tournament {
-private:
-	Population population;
-public:
-	Tournament();//default constructor
-	Tournament(const Tournament & tourmnt);//copy constructor
-	void arrangeTournament();
-};
-
-//class for genetic algorithm
+//genetic algorithm
 class Geneticalgorithm{
 private:
-	Population currentPopulation;
-	Population futurePopulation;
-	Elitism elitism;
-	Replication replication;
-	Mutation mutation;
-	CrossOver crossover;
-	Tournament tournament;
+	int maxIterations;
+	int populationSize;
+	int numberOfNodes;
+	int depotNode;
+	int capacityLimit;
+	int kChainLength;
+	int sWapLength;
+	std::vector<Chromosome> generationBestSolutions;
+	std::vector<FeasibleSolution> generationalOffsprings;
+	std::vector<int> demand;
+	std::vector<std::vector<double>> distance;
+	Population ppl;
+	Chromosome initialSolution;
+	Chromosome incumbentSolution;
+	Chromosome bestSolution;
 public:
-	Geneticalgorithm();//default constructor
-	Geneticalgorithm(const Geneticalgorithm & ga);//copy constructor	
-	void selectElitChromosome();
-	void arrangeTournament();
-	void performPartiallyMappedCrossover();
-	void performChainMutation();
-	void showCurrentPopulation();
-	void showFuturePopulation();
-	Population getCurrentPopulation();
-	Population getFuturePopulation();
+	Geneticalgorithm();
+	Geneticalgorithm(const Geneticalgorithm & ga);	
+	Geneticalgorithm(int populationSize, int numberOfNodes, int depotNode, int capacityLimit, int kChainLength, int sWapLength, std::vector<int> demand, std::vector<std::vector<double>> distance);
+	void populateInitialGeneration();
+	std::vector<Chromosome> getGenerationBestSolutions();
+	std::vector<FeasibleSolution> getGenerationalOffsprings();
+	Chromosome getGASolution();
 	void runGeneticAlgorithm();
+	void showGASolution();
+	void showCurrentGeneration();
+	FeasibleSolution getFeasibleSolutionFromChromosome(Chromosome chrom);
+	Chromosome getChromosomeFromFeasibleSolution(FeasibleSolution febSol);
 };
+
 
 
 #endif // !GENETICALGOIRTHM_H
