@@ -603,7 +603,7 @@ void Population::performMutation() {
 //default constructor
 Geneticalgorithm::Geneticalgorithm() {
 	std::cout << "The default constructor of the genetic algorithm has been called!" << std::endl;
-	maxIterations			= 50;
+	maxIterations			= 150;
 	populationSize			= 0;
 	numberOfNodes			= 0;
 	depotNode				= 0;
@@ -632,7 +632,7 @@ Geneticalgorithm::Geneticalgorithm(const Geneticalgorithm & ga) {
 
 //construct ga with initial values
 Geneticalgorithm::Geneticalgorithm(int popSize, int numNodes, int depNode, int capLimit, int kChain, int sWap, std::vector<int> dem, std::vector<std::vector<double>> dist) {
-	maxIterations			= 50;
+	maxIterations			= 150;
 	populationSize			= popSize;
 	numberOfNodes		    = numNodes;
 	depotNode				= depNode;
@@ -651,13 +651,19 @@ void Geneticalgorithm::populateInitialGeneration() {
 	ppl.populatePopulation();
 }
 
+//prints current generation best solution
+void Geneticalgorithm::showCurrentGenerationBestChromosome() {
+	Chromosome bestSol = ppl.getBestChromosome();
+	bestSol.showChromosome();
+}
+
 //returns best solutions of every generation
 std::vector<Chromosome> Geneticalgorithm::getGenerationBestSolutions() {
 	return generationBestSolutions;
 }
 
 //returns offsprings of every generation
-std::vector<FeasibleSolution> Geneticalgorithm::getGenerationalOffsprings() {
+std::vector<Chromosome> Geneticalgorithm::getGenerationalOffsprings() {
 	return generationalOffsprings;
 }
 
@@ -668,25 +674,68 @@ Chromosome Geneticalgorithm::getGASolution() {
 
 //runs ga algorithm
 void Geneticalgorithm::runGeneticAlgorithm() {
-	//needs implementation
+	auto start = high_resolution_clock::now();
+	using std::chrono::duration;
+	//run ga
+	populateInitialGeneration();
+	initialSolution = ppl.getBestChromosome();
+	incumbentSolution = ppl.getBestChromosome();
+	bestSolution = ppl.getBestChromosome();
+	bestSolution.showChromosome();
+	for (int i = 0; i < maxIterations; ++i) {
+		ppl.performCrossOver();
+		ppl.performMutation();
+		Chromosome crm = ppl.getOffspring();
+		generationalOffsprings.push_back(crm);
+		ppl.updatePopulationWithOffspring();
+		Chromosome crom = ppl.getBestChromosome();
+		generationBestSolutions.push_back(crom);
+		if (crom.getFitness()<incumbentSolution.getFitness()) {
+			incumbentSolution = crom;
+		}
+	}
+	auto stop = high_resolution_clock::now();
+	duration<double, std::milli> ms_double = stop - start;
+	std::cout << "\nThe initial solution is : " << std::endl;
+	initialSolution.showChromosome();
+	std::cout << "\nThe best solution is : " << std::endl;
+	incumbentSolution.showChromosome();
+	double secDuration = double(ms_double.count()) / 1000;
+	std::cout << secDuration << " seconds" << std::endl;
 }
 
 //prints ga solution
 void Geneticalgorithm::showGASolution() {
-	bestSolution.showChromosome();
+	std::cout << "\nThe GA best solution is : " << std::endl;
+	incumbentSolution.showChromosome();
 }
 
 //converst a chromosome to a feasible solution 
 FeasibleSolution Geneticalgorithm::getFeasibleSolutionFromChromosome(Chromosome chrom) {
-	//needs implementation 
-	FeasibleSolution febSol;
+	std::vector<int> chrom_rep = chrom.getChromosomeRepresentation();
+	int sepInt = chrom.getSepInt();
+	int fitness = chrom.getFitness();
+	std::list<int> sol_rep;
+	for (auto it : chrom_rep) {
+		sol_rep.push_back(it);
+	}
+	FeasibleSolution febSol(sol_rep, fitness, sepInt, 0, 0);
 	return febSol;
 }
 
+
+
 //converts feasible solution to a chromosome
 Chromosome Geneticalgorithm::getChromosomeFromFeasibleSolution(FeasibleSolution febSol) {
-	//needs implementation
-	Chromosome crm;
+	std::list<int> feb_sol = febSol.getSolution();
+	int sepInt = febSol.getSeparatorIntVal();
+	int fitness = febSol.getCost();
+	bool feasible = true;
+	std::vector<int> chrom_sol;
+	for (auto it: feb_sol) {
+		chrom_sol.push_back(it);
+	}
+	Chromosome crm(chrom_sol, fitness, sepInt, feasible, capacityLimit);
 	return crm;
 }
 

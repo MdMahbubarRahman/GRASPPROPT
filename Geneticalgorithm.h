@@ -144,7 +144,7 @@ private:
 	int kChainLength;
 	int sWapLength;
 	std::vector<Chromosome> generationBestSolutions;
-	std::vector<FeasibleSolution> generationalOffsprings;
+	std::vector<Chromosome> generationalOffsprings;//need change later
 	std::vector<int> demand;
 	std::vector<std::vector<double>> distance;
 	Population ppl;
@@ -156,8 +156,9 @@ public:
 	Geneticalgorithm(const Geneticalgorithm & ga);	
 	Geneticalgorithm(int populationSize, int numberOfNodes, int depotNode, int capacityLimit, int kChainLength, int sWapLength, std::vector<int> demand, std::vector<std::vector<double>> distance);
 	void populateInitialGeneration();
+	void showCurrentGenerationBestChromosome();
 	std::vector<Chromosome> getGenerationBestSolutions();
-	std::vector<FeasibleSolution> getGenerationalOffsprings();
+	std::vector<Chromosome> getGenerationalOffsprings();
 	Chromosome getGASolution();
 	void runGeneticAlgorithm();
 	void showGASolution();
