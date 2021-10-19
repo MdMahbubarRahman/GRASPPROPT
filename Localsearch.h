@@ -41,7 +41,7 @@ public:
 
 
 //comparator for customer to depot distance
-class Comparator {
+class Compare{
 public:
 	bool operator()(CustomerDepotDifferentialCost & a, CustomerDepotDifferentialCost & b);
 };
@@ -50,12 +50,12 @@ public:
 //local solution class
 class LocalSolution {
 private:
-	int numberOfSattellites;
+	int numberOfSatellites;
 	int depotNode;
 	std::vector<int> demands;
 	std::vector<std::vector<double>> distances;//cost
 	std::set<int> customerNodes;
-	std::set<int> sattelliteNodes;
+	std::set<int> satelliteNodes;
 	std::list<int> firstEchelonRoutes;
 	std::list<std::list<int>> secondEchelonRoutes;
 	Chromosome firstEchelonSolution;
@@ -64,13 +64,13 @@ private:
 public:
 	LocalSolution();
 	LocalSolution(const LocalSolution & locSol);
-	LocalSolution(Chromosome firstEchelonSol, std::list<Chromosome> secondEchelonSols, std::vector<int> demands, std::vector<std::vector<double>> distances, std::vector<int> customerNodes, std::vector<int> sattelliteNodes);
-	int getNumberOfSattellites();
+	LocalSolution(Chromosome firstEchelonSol, std::list<Chromosome> secondEchelonSols, std::vector<int> demands, std::vector<std::vector<double>> distances, std::vector<int> customerNodes, std::vector<int> satelliteNodes);
+	int getNumberOfSatellites();
 	int getDepotNode();
 	std::vector<int> getDemands();
 	std::vector<std::vector<double>> getDistances();//cost
 	std::set<int> getCustomerNodes();
-	std::set<int> getSattelliteNodes();
+	std::set<int> getSatelliteNodes();
 	std::list<int> getFirstEchelonRoutes();
 	std::list<std::list<int>> getSecondEchelonRoutes();
 	Chromosome getFirstEchelonSolution();
@@ -83,7 +83,11 @@ class Localsearch{
 private:
 	LocalSolution currentSolution;
 	LocalSolution bestSolution;
-	std::priority_queue<CustomerDepotDifferentialCost, std::vector<CustomerDepotDifferentialCost>, Comparator> orderedCustomerList;
+	std::priority_queue<CustomerDepotDifferentialCost, std::vector<CustomerDepotDifferentialCost>, Compare> orderedCustomerList;
+	Chromosome firstEchelonSolution;
+	Chromosome currentSatelliteSolution;
+	Chromosome potentialSatelliteSolution;
+	bool isNodeAdditionFeasible;
 public:
 	Localsearch();
 	Localsearch(const Localsearch & locsrch);
@@ -93,7 +97,10 @@ public:
 	void showCurrentSolution();
 	void showBestSolution();
 	void runLocalSearch();
-	void orderCustomersBasedOnReassignmentCosts();
+	void customersReassignmentOrder();
+	void checkNodeAdditionFeasibility();
+	void addNodeToThePotentialSatellite();
+	void deleteNodeFromTheCurrentSatellite();
 };
 
 
