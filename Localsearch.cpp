@@ -3,6 +3,117 @@
 //Implement Local Search algorithm here
 
 //default constructor
+CVRPSolution::CVRPSolution() {
+	std::cout << "The default constructor of the FeasibleSolution class has been called!" << std::endl;
+}
+
+//constructor
+CVRPSolution::CVRPSolution(std::list<int> sol, std::set<int> custs, std::map<int, int> custTodemand, double cost, int sepIntVal, int maxCapacity){
+	customers = custs;
+	customerTodemand = custTodemand;
+	solCost = cost;
+	separatorIntVal = sepIntVal;
+	maxRouteCapacity = maxCapacity;
+	if (!sol.empty())
+		solution = sol;
+	else {
+		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+	}
+}
+
+//copy constructor
+CVRPSolution::CVRPSolution(const CVRPSolution& febSol) {
+	customers = febSol.customers;
+	customerTodemand = febSol.customerTodemand;
+	solCost = febSol.solCost;
+	separatorIntVal = febSol.separatorIntVal;
+	if (!febSol.solution.empty())
+		solution = febSol.solution;
+	else {
+		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+	}
+}
+
+//prints the feasible solution object
+void CVRPSolution::showSolution() const {
+	if (!solution.empty()) {
+		std::cout << "The solution is : ";
+		for (const auto& iter : solution) {
+			std::cout << iter << " ";
+		}
+		std::cout << ";" << std::endl;
+		std::cout << "The cost of the solution is : " << solCost << std::endl;
+		std::cout << "The separtor interger value is : " << separatorIntVal << std::endl;
+	}
+	else
+		std::cout << "The solution is empty!" << std::endl;
+}
+
+//prints customers
+void CVRPSolution::showCustomers() {
+	std::cout << "The customers ID are : " << std::endl;
+	for (auto it : customers) {
+		std::cout << it << " ";
+	}
+	std::cout << ";" << std::endl;
+}
+
+//prints cutomer to demand map
+void CVRPSolution::showCustomerTodemandMap() {
+	std::cout << "The customer to demand map is : " << std::endl;
+	for (auto & it: customerTodemand) {
+		std::cout << "cutomer : " << it.first << "--->" << " demand : " << it.second << std::endl;
+	}
+}
+
+//prints solution cost
+void CVRPSolution::showSolCost() {
+	std::cout << "The cost of the solution is : " << solCost << std::endl;
+}
+
+//prints separator integer value
+void CVRPSolution::showSepIntVal() {
+	std::cout << "The separator integer value is : " << separatorIntVal << std::endl;
+}
+
+//prints maximum route capacity in terms of demand satisfied
+void CVRPSolution::showMaxRouteCapacity() {
+	std::cout << "The maximum route capacity is : " << maxRouteCapacity << std::endl;
+}
+
+//returns solution vector
+std::list<int> CVRPSolution::getSolution() {
+	return solution;
+}
+
+//returns separator integer value
+int CVRPSolution::getSeparatorIntVal() {
+	return separatorIntVal;
+}
+
+//returns cost of the solution
+double CVRPSolution::getCost() {
+	return solCost;
+}
+
+//returns max route capacity
+int CVRPSolution::getMaxRouteCapacity() {
+	return maxRouteCapacity;
+}
+
+//returns customer set
+std::set<int> CVRPSolution::getCustomers() {
+	return customers;
+}
+
+//returns customer to demand map
+std::map<int, int> CVRPSolution::getCustomerTodemandMap() {
+	return customerTodemand;
+}
+
+
+
+//default constructor
 CustomerDepotDifferentialCost::CustomerDepotDifferentialCost() {
 	customerID = 0;
 	currentDepot = 0;
@@ -377,6 +488,7 @@ void Localsearch::addNodeToThePotentialSatellite() {
 	}
 	cost = cost + costDiff;
 	Chromosome newChrom(chrom_rep, cost, sepInt, true, capLimit);
+	//tabu search on newChrom can be applied
 	potentialSatelliteSolution = newChrom;
 }
 
@@ -400,8 +512,24 @@ void Localsearch::deleteNodeFromTheCurrentSatellite() {
 		i++;
 	}
 	Chromosome newChrom(newSol, cost, sepInt, true, capLimit);
+	//tabu search on newChrom can be applied
 	currentSatelliteSolution = newChrom;
 }
 
+//updates first echelon solution 
+void Localsearch::updateFirstEchelonSolution() {
+	//NOTE: total demand field could be added in the chromosome or feasible solution class.
+	//update demand for each satellite stations
+	//check feasibility of the first echelon solution with the updated demand
+	//if infeasible then update to feasible solution
+	//run tabu search to optimize the current solution
+	//
+	//
+	//
+}
 
 
+//compute objectve value of the new solution after local search
+void Localsearch::computeObjectiveValueOfTheNewSolution() {
+	//Local solution class should have a objective value field.
+}

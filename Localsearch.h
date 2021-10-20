@@ -21,6 +21,33 @@ More insight of this algorithm can be found from the following paper:
 	   TG Crainic, S Mancini, G Perboli, R Tadei
 */
 
+//class cvrp solution 
+class CVRPSolution {
+private:
+	std::list<int> solution;
+	std::set<int> customers;
+	std::map<int, int> customerTodemand;
+	double solCost = 0;
+	int separatorIntVal = 0;
+	int maxRouteCapacity = 0;
+public:
+	CVRPSolution();//default constructor
+	CVRPSolution(std::list<int> sol, std::set<int> customers, std::map<int, int> customerTodemand, double cost, int sepIntVal, int maxRouteCapacity);//constructor
+	CVRPSolution(const CVRPSolution& sol); //copy constructor
+	void showSolution() const;
+	void showCustomers();
+	void showCustomerTodemandMap();
+	void showSolCost();
+	void showSepIntVal();
+	void showMaxRouteCapacity();
+	std::list<int> getSolution();
+	int getSeparatorIntVal();
+	double getCost();
+	int getMaxRouteCapacity();
+	std::set<int> getCustomers();
+	std::map<int, int> getCustomerTodemandMap();
+};
+
 //customer to depots potential assignment class
 class CustomerDepotDifferentialCost {
 private:
@@ -101,6 +128,8 @@ public:
 	void checkNodeAdditionFeasibility();
 	void addNodeToThePotentialSatellite();
 	void deleteNodeFromTheCurrentSatellite();
+	void updateFirstEchelonSolution();
+	void computeObjectiveValueOfTheNewSolution();
 };
 
 
