@@ -4,33 +4,37 @@
 
 //default constructor
 CVRPSolution::CVRPSolution() {
-	std::cout << "The default constructor of the FeasibleSolution class has been called!" << std::endl;
+	std::cout << "The default constructor of the CVRPSolution class has been called!" << std::endl;
 }
 
 //constructor
-CVRPSolution::CVRPSolution(std::list<int> sol, std::set<int> custs, std::map<int, int> custTodemand, double cost, int sepIntVal, int maxCapacity){
-	customers = custs;
-	customerTodemand = custTodemand;
-	solCost = cost;
-	separatorIntVal = sepIntVal;
-	maxRouteCapacity = maxCapacity;
+CVRPSolution::CVRPSolution(std::vector<int> sol, std::set<int> custs, std::map<int, int> custTodemand, double cost, int satNode, int maxCapacity, int demandSatisfied, int numRoutes){
+	customers		    	= custs;
+	customerTodemand        = custTodemand;
+	solCost                 = cost;
+	satelliteNode           = satNode;
+	maxRouteCapacity        = maxCapacity;
+	totalDemandSatisfied    = demandSatisfied;
+	numberOfRoutes          = numRoutes;
 	if (!sol.empty())
 		solution = sol;
 	else {
-		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+		std::cout << "The solution vector is empty! CVRP Solution object could not be formed." << std::endl;
 	}
 }
 
 //copy constructor
 CVRPSolution::CVRPSolution(const CVRPSolution& febSol) {
-	customers = febSol.customers;
-	customerTodemand = febSol.customerTodemand;
-	solCost = febSol.solCost;
-	separatorIntVal = febSol.separatorIntVal;
+	customers				= febSol.customers;
+	customerTodemand        = febSol.customerTodemand;
+	solCost                 = febSol.solCost;
+	satelliteNode           = febSol.satelliteNode;
+	totalDemandSatisfied    = febSol.totalDemandSatisfied;
+	numberOfRoutes          = febSol.numberOfRoutes;
 	if (!febSol.solution.empty())
 		solution = febSol.solution;
 	else {
-		std::cout << "The solution vector is empty! Feasible Solution object could not be formed." << std::endl;
+		std::cout << "The solution vector is empty! CVRP Solution object could not be formed." << std::endl;
 	}
 }
 
@@ -43,7 +47,10 @@ void CVRPSolution::showSolution() const {
 		}
 		std::cout << ";" << std::endl;
 		std::cout << "The cost of the solution is : " << solCost << std::endl;
-		std::cout << "The separtor interger value is : " << separatorIntVal << std::endl;
+		std::cout << "The satellite node id is : " << satelliteNode << std::endl;
+		std::cout << "The amount of the demand satisfied is : " << totalDemandSatisfied << std::endl;
+		std::cout << "The number of vechile routes generated is : " << numberOfRoutes << std::endl;
+		std::cout << "The number of customers satisfied is : " << customers.size() << std::endl;
 	}
 	else
 		std::cout << "The solution is empty!" << std::endl;
@@ -72,8 +79,8 @@ void CVRPSolution::showSolCost() {
 }
 
 //prints separator integer value
-void CVRPSolution::showSepIntVal() {
-	std::cout << "The separator integer value is : " << separatorIntVal << std::endl;
+void CVRPSolution::showSatelliteNode() {
+	std::cout << "The satellite node id is : " << satelliteNode << std::endl;
 }
 
 //prints maximum route capacity in terms of demand satisfied
@@ -81,14 +88,24 @@ void CVRPSolution::showMaxRouteCapacity() {
 	std::cout << "The maximum route capacity is : " << maxRouteCapacity << std::endl;
 }
 
+//prints the amount of demand has been satisfied by the solution
+void CVRPSolution::showTotalDemandSatisfied() {
+	std::cout << "The amount of demand satisfied is : " << totalDemandSatisfied << std::endl;
+}
+
+//prints the number of routes in the solution
+void CVRPSolution::showNumberOfRoutes() {
+	std::cout << "The number of routes in the solution is : " << numberOfRoutes << std::endl;
+}
+
 //returns solution vector
-std::list<int> CVRPSolution::getSolution() {
+std::vector<int> CVRPSolution::getSolution() {
 	return solution;
 }
 
 //returns separator integer value
-int CVRPSolution::getSeparatorIntVal() {
-	return separatorIntVal;
+int CVRPSolution::getSatelliteNode() {
+	return satelliteNode;
 }
 
 //returns cost of the solution
@@ -111,7 +128,15 @@ std::map<int, int> CVRPSolution::getCustomerTodemandMap() {
 	return customerTodemand;
 }
 
+//returns the amount of demand satisfied
+int CVRPSolution::getTotalDemandSatisfied() {
+	return totalDemandSatisfied;
+}
 
+//returns the number of routes present in the solution
+int CVRPSolution::getNumberOfRoutes() {
+	return numberOfRoutes;
+}
 
 //default constructor
 CustomerDepotDifferentialCost::CustomerDepotDifferentialCost() {
@@ -165,7 +190,6 @@ void CustomerDepotDifferentialCost::showCustomerDepotDifferentialCost() {
 	std::cout << "The differential cost is : " << differentialCost << std::endl;
 }
 
-
 //comparator
 bool Compare::operator()(CustomerDepotDifferentialCost & a, CustomerDepotDifferentialCost & b) {
 	return (a.getDifferentialCost() > b.getDifferentialCost());
@@ -173,102 +197,70 @@ bool Compare::operator()(CustomerDepotDifferentialCost & a, CustomerDepotDiffere
 
 
 //default constructor
-LocalSolution::LocalSolution() {
-	numberOfSatellites = 0;
-	depotNode = 0;
+TwoEchelonSolution::TwoEchelonSolution() {
+	std::cout << "The default constructor of the TwoEchelnSolution has been called!" << std::endl;
 }
 
 //copy constructor
-LocalSolution::LocalSolution(const LocalSolution& locSol) {
-	numberOfSatellites		 = locSol.numberOfSatellites;
-	depotNode				 = locSol.depotNode;
-	demands					 = locSol.demands;
-	distances				 = locSol.distances;//cost
+TwoEchelonSolution::TwoEchelonSolution(const TwoEchelonSolution & locSol) {
+	numberOfActiveSatellites = locSol.numberOfActiveSatellites;
+	customerToDemandMap      = locSol.customerToDemandMap;
+	distanceMatrix           = locSol.distanceMatrix;
 	customerNodes			 = locSol.customerNodes;
 	satelliteNodes			 = locSol.satelliteNodes;
-	firstEchelonRoutes		 = locSol.firstEchelonRoutes;
-	secondEchelonRoutes		 = locSol.secondEchelonRoutes;
 	firstEchelonSolution	 = locSol.firstEchelonSolution;
 	secondEchelonSolutions	 = locSol.secondEchelonSolutions;
 }
 
 //constructor
-LocalSolution::LocalSolution(Chromosome firstEchelonSol, std::list<Chromosome> secondEchelonSols, std::vector<int> demands, std::vector<std::vector<double>> distances, std::vector<int> customerNodes, std::vector<int> satelliteNodes) {
-	numberOfSatellites = secondEchelonSols.size();
-	depotNode = firstEchelonSol.getSepInt();
-	demands = demands;
-	distances = distances;
-	customerNodes = customerNodes;
-	satelliteNodes = satelliteNodes;
-	std::vector<int> firstRouts = firstEchelonSol.getChromosomeRepresentation();
-	for (auto it: firstRouts) {
-		firstEchelonRoutes.push_back(it);
-	}
-	std::list<Chromosome> secondRouts = secondEchelonSols;
-	for (auto & iter: secondRouts) {
-		std::list<int> route;
-		for (auto it: iter.getChromosomeRepresentation()) {
-			route.push_back(it);
-		}
-		secondEchelonRoutes.push_back(route);
-	}
+TwoEchelonSolution::TwoEchelonSolution(int numActiveSatellites, std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> disMatrix, std::set<int> cusNodes, std::set<int> satNodes, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols){
+	numberOfActiveSatellites = numActiveSatellites;
+	customerToDemandMap = cusToDemandMap;
+	satelliteToDemandMap = satToDemandMap;
+	distanceMatrix = disMatrix;
+	customerNodes = cusNodes;
+	satelliteNodes = satNodes;
 	firstEchelonSolution = firstEchelonSol;
 	secondEchelonSolutions = secondEchelonSols;
 }
 
 //returns the number of total satellites
-int LocalSolution::getNumberOfSatellites() {
-	return numberOfSatellites;
+int TwoEchelonSolution::getNumberOfActiveSatellites() {
+	return numberOfActiveSatellites;
 }
 
-//returns the depot node number
-int LocalSolution::getDepotNode() {
-	return depotNode;
+//returns customer to demand map
+std::map<int, int> TwoEchelonSolution::getCustomerToDemandMap() {
+	return customerToDemandMap;
 }
 
-//returns demand vector
-std::vector<int> LocalSolution::getDemands() {
-	return demands;
+//returns satellite to demand map
+std::map<int, int> TwoEchelonSolution::getSatelliteToDemandMap() {
+	return satelliteToDemandMap;
 }
 
-//returns distance matrix
-std::vector<std::vector<double>> LocalSolution::getDistances() {
-	return distances;
+//returns distance  matrix
+std::vector<std::vector<double>> TwoEchelonSolution::getDistanceMatrix() {
+	return distanceMatrix;
 }
 
 //returns customer nodes
-std::set<int> LocalSolution::getCustomerNodes() {
+std::set<int> TwoEchelonSolution::getCustomerNodes() {
 	return customerNodes;
 }
 
-std::set<int> LocalSolution::getSatelliteNodes() {
+std::set<int> TwoEchelonSolution::getSatelliteNodes() {
 	return satelliteNodes;
 }
 
-//returns first echelon routes
-std::list<int> LocalSolution::getFirstEchelonRoutes() {
-	return firstEchelonRoutes;
-}
-
-//retuns second echelon routes
-std::list<std::list<int>> LocalSolution::getSecondEchelonRoutes() {
-	return secondEchelonRoutes;
-}
-
 //returns first echelon solution
-Chromosome LocalSolution::getFirstEchelonSolution() {
+CVRPSolution TwoEchelonSolution::getFirstEchelonSolution() {
 	return firstEchelonSolution;
 }
 
 //returns second echelon solutions
-std::list<Chromosome> LocalSolution::getSecondEchelonSolutions() {
+std::list<CVRPSolution> TwoEchelonSolution::getSecondEchelonSolutions() {
 	return secondEchelonSolutions;
-}
-
-//updates the local solution
-void LocalSolution::updateLocalSolution(Chromosome firstEchelonSolution, std::list<Chromosome> secondEchelonSolutions, std::list<int> firstEchelonRoutes, std::list<std::list<int>> secondEchelonRoutes) {
-	//needs implementation
-
 }
 
 //default constructor
@@ -288,17 +280,17 @@ Localsearch::Localsearch(const Localsearch& locsrch) {
 }
 
 //constructor
-Localsearch::Localsearch(LocalSolution currentSolution, LocalSolution bestSolution) {
+Localsearch::Localsearch(TwoEchelonSolution currentSolution, TwoEchelonSolution bestSolution) {
 	isNodeAdditionFeasible = false;
 }
 
 //returns current solution
-LocalSolution Localsearch::getCurrentSolution(){
+TwoEchelonSolution Localsearch::getCurrentSolution(){
 	return currentSolution;
 }
 
 //returns best solution
-LocalSolution Localsearch::getBestSolution(){
+TwoEchelonSolution Localsearch::getBestSolution(){
 	return bestSolution;
 }
 
@@ -319,35 +311,35 @@ void Localsearch::runLocalSearch() {
 
 //orders customers based on reassignment costs
 void Localsearch::customersReassignmentOrder() {
-	//create customer to depot map
+	//create customer to depot/satellite map
 	std::map<int, int> customerTodepotDict;
-	std::vector<int> firstEchelonSol = currentSolution.getFirstEchelonSolution().getChromosomeRepresentation();
-	int firstSepInt = currentSolution.getFirstEchelonSolution().getSepInt();
+	std::vector<int> firstEchelonSol = currentSolution.getFirstEchelonSolution().getSolution();
+	int depotID = currentSolution.getFirstEchelonSolution().getSatelliteNode();
 	for (auto it: firstEchelonSol) {
 		if (currentSolution.getCustomerNodes().find(it) != currentSolution.getCustomerNodes().end()) {
-			customerTodepotDict.insert(std::pair<int, int>(it, 0));
+			customerTodepotDict.insert(std::pair<int, int>(it, depotID));
 		}
 	}
-	std::list<Chromosome> secondEchelonSolutions = currentSolution.getSecondEchelonSolutions();
+	std::list<CVRPSolution> secondEchelonSolutions = currentSolution.getSecondEchelonSolutions();
 	for (auto & it : secondEchelonSolutions) {
-		int sepInt = it.getSepInt();//satellite id
-		for (auto iter : it.getChromosomeRepresentation()) {
-			if (iter != sepInt) {
-				customerTodepotDict.insert(std::pair<int, int>(iter, sepInt));
+		int satelliteID = it.getSatelliteNode();
+		for (auto iter : it.getSolution()) {
+			if (iter != satelliteID) {
+				customerTodepotDict.insert(std::pair<int, int>(iter, satelliteID));
 			}
 		}
 	}
 	//populate the customer order list/priority queue
-	for (auto it : customerTodepotDict) {
+	for (auto &it : customerTodepotDict) {
 		int custID = it.first;
 		int currentDepot = it.second;
 		int potentialDepo = 0;
 		double cost = 0;
-		double currCost = currentSolution.getDistances()[custID][currentDepot];
+		double currCost = currentSolution.getDistanceMatrix()[custID][currentDepot];
 		double diffCost = currCost;
 		for (auto sat : currentSolution.getSatelliteNodes()) {
 			if (sat != currentDepot) {
-				cost = currentSolution.getDistances()[custID][sat]- currCost;
+				cost = currentSolution.getDistanceMatrix()[custID][sat]- currCost;
 				if (cost < diffCost) {
 					diffCost = cost;
 					potentialDepo = sat;
@@ -362,14 +354,14 @@ void Localsearch::customersReassignmentOrder() {
 //check whether the potential satellite can take an additional node
 void Localsearch::checkNodeAdditionFeasibility() {
 	int NodeDemand = 2;//need to extract this from demand vector
-	std::vector<int> solution = potentialSatelliteSolution.getChromosomeRepresentation();
+	std::vector<int> solution = potentialSatelliteSolution.getSolution();
 	int capLimit = potentialSatelliteSolution.getMaxRouteCapacity();
-	int sepInt = potentialSatelliteSolution.getSepInt();
-	std::vector<int> demand = currentSolution.getDemands();
+	int satelliteID = potentialSatelliteSolution.getSatelliteNode();
+	std::map<int, int> demand = currentSolution.getCustomerToDemandMap();
 	//check feasibility
 	int capacity = 0;
 	for (auto it : solution) {
-		if (it != sepInt) {
+		if (it != satelliteID) {
 			capacity += demand[it];
 		}
 		else {
@@ -391,33 +383,31 @@ void Localsearch::addNodeToThePotentialSatellite() {
 	std::list<std::vector<int>> saturatedRoutes;
 	std::list<std::vector<int>> unSaturatedRoutes;
 	std::list<std::vector<int>> updatedUnSaturatedRoutes;
-	std::vector<int> solution = potentialSatelliteSolution.getChromosomeRepresentation();
-	int sepInt = potentialSatelliteSolution.getSepInt();
-	double cost = potentialSatelliteSolution.getFitness();
+	std::vector<int> solution = potentialSatelliteSolution.getSolution();
+	int satelliteID = potentialSatelliteSolution.getSatelliteNode();
+	double cost = potentialSatelliteSolution.getCost();
 	int capLimit = potentialSatelliteSolution.getMaxRouteCapacity();
-	std::vector<std::vector<double>> distance = currentSolution.getDistances();
-	std::vector<int> demand = currentSolution.getDemands();
+	std::vector<std::vector<double>> distance = currentSolution.getDistanceMatrix();
+	std::map<int, int> customerToDemand = potentialSatelliteSolution.getCustomerTodemandMap();
 	//find the potential routes for insertion
 	std::vector<int> route;
 	int capacity = 0;
-	int satured = 0;
-	int unSatured = 0;
 	for (auto it: solution) {
 		if (route.size() == 0) {
-			route.push_back(sepInt);
+			route.push_back(satelliteID);
 		}
-		if (it != sepInt) {
-			capacity += demand[it];
+		if (it != satelliteID) {
+			capacity += customerToDemand[it];
 		}
-		if (it == sepInt && capacity != 0) {
+		if (it == satelliteID && capacity != 0) {
 			if (capacity+nodeDemand <= capLimit) {
-				route.push_back(sepInt);
+				route.push_back(satelliteID);
 				unSaturatedRoutes.push_back(route);
 				route.clear();
 				capacity = 0;
 			}
 			else {
-				route.push_back(sepInt);
+				route.push_back(satelliteID);
 				saturatedRoutes.push_back(route);
 				route.clear();
 				capacity = 0;
@@ -487,19 +477,19 @@ void Localsearch::addNodeToThePotentialSatellite() {
 		}
 	}
 	cost = cost + costDiff;
-	Chromosome newChrom(chrom_rep, cost, sepInt, true, capLimit);
+	//Chromosome newChrom(chrom_rep, cost, sepInt, true, capLimit);
 	//tabu search on newChrom can be applied
-	potentialSatelliteSolution = newChrom;
+	//potentialSatelliteSolution = newChrom;
 }
 
 //deletes node from the current satellite
 void Localsearch::deleteNodeFromTheCurrentSatellite() {
-	std::vector<int> sol = currentSatelliteSolution.getChromosomeRepresentation();
-	int sepInt = currentSatelliteSolution.getSepInt();
+	std::vector<int> sol = currentSatelliteSolution.getSolution();
+	int satelliteID = currentSatelliteSolution.getSatelliteNode();
 	int capLimit = currentSatelliteSolution.getMaxRouteCapacity();
-	double cost = currentSatelliteSolution.getFitness();
-	std::vector<std::vector<double>> distance = currentSolution.getDistances();
-	int node = 0;//needs update here
+	double cost = currentSatelliteSolution.getCost();
+	std::vector<std::vector<double>> distance = currentSolution.getDistanceMatrix();
+	int node = 0;//node to be deleted
 	std::vector<int> newSol;
 	int i = 0;
 	for (auto it: sol) {
@@ -511,9 +501,9 @@ void Localsearch::deleteNodeFromTheCurrentSatellite() {
 		}
 		i++;
 	}
-	Chromosome newChrom(newSol, cost, sepInt, true, capLimit);
+	//CVRPSolution newChrom(newSol, cost, sepInt, true, capLimit);
 	//tabu search on newChrom can be applied
-	currentSatelliteSolution = newChrom;
+	//currentSatelliteSolution = newChrom;
 }
 
 //updates first echelon solution 

@@ -24,28 +24,59 @@ More insight of this algorithm can be found from the following paper:
 //class cvrp solution 
 class CVRPSolution {
 private:
-	std::list<int> solution;
+	std::vector<int> solution;
 	std::set<int> customers;
 	std::map<int, int> customerTodemand;
 	double solCost = 0;
-	int separatorIntVal = 0;
+	int satelliteNode = 0;
 	int maxRouteCapacity = 0;
+	int totalDemandSatisfied = 0;
+	int numberOfRoutes = 0;
 public:
 	CVRPSolution();//default constructor
-	CVRPSolution(std::list<int> sol, std::set<int> customers, std::map<int, int> customerTodemand, double cost, int sepIntVal, int maxRouteCapacity);//constructor
-	CVRPSolution(const CVRPSolution& sol); //copy constructor
+	CVRPSolution(std::vector<int> sol, std::set<int> customers, std::map<int, int> customerTodemand, double cost, int satelliteNode, int maxRouteCapacity, int totalDemandSatisfied, int numberOfRoutes);//constructor
+	CVRPSolution(const CVRPSolution & sol); //copy constructor
 	void showSolution() const;
 	void showCustomers();
 	void showCustomerTodemandMap();
 	void showSolCost();
-	void showSepIntVal();
+	void showSatelliteNode();
 	void showMaxRouteCapacity();
-	std::list<int> getSolution();
-	int getSeparatorIntVal();
+	void showTotalDemandSatisfied();
+	void showNumberOfRoutes();
+	std::vector<int> getSolution();
+	int getSatelliteNode();
 	double getCost();
 	int getMaxRouteCapacity();
 	std::set<int> getCustomers();
 	std::map<int, int> getCustomerTodemandMap();
+	int getTotalDemandSatisfied();
+	int getNumberOfRoutes();
+};
+
+//local solution class
+class TwoEchelonSolution {
+private:
+	int numberOfActiveSatellites = 0;
+	std::map<int, int> customerToDemandMap;
+	std::map<int, int> satelliteToDemandMap;
+	std::vector<std::vector<double>> distanceMatrix;
+	std::set<int> customerNodes;
+	std::set<int> satelliteNodes;
+	CVRPSolution firstEchelonSolution;
+	std::list<CVRPSolution> secondEchelonSolutions;
+public:
+	TwoEchelonSolution();
+	TwoEchelonSolution(const TwoEchelonSolution & locSol);
+	TwoEchelonSolution(int numberOfActiveSatellites, std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes,	std::set<int> satelliteNodes, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols);
+	int getNumberOfActiveSatellites();
+	std::map<int, int> getCustomerToDemandMap();
+	std::map<int, int> getSatelliteToDemandMap();
+	std::vector<std::vector<double>> getDistanceMatrix();
+	std::set<int> getCustomerNodes();
+	std::set<int> getSatelliteNodes();
+	CVRPSolution getFirstEchelonSolution();
+	std::list<CVRPSolution> getSecondEchelonSolutions();
 };
 
 //customer to depots potential assignment class
@@ -66,61 +97,28 @@ public:
 	void showCustomerDepotDifferentialCost();
 };
 
-
 //comparator for customer to depot distance
 class Compare{
 public:
 	bool operator()(CustomerDepotDifferentialCost & a, CustomerDepotDifferentialCost & b);
 };
 
-
-//local solution class
-class LocalSolution {
-private:
-	int numberOfSatellites;
-	int depotNode;
-	std::vector<int> demands;
-	std::vector<std::vector<double>> distances;//cost
-	std::set<int> customerNodes;
-	std::set<int> satelliteNodes;
-	std::list<int> firstEchelonRoutes;
-	std::list<std::list<int>> secondEchelonRoutes;
-	Chromosome firstEchelonSolution;
-	std::list<Chromosome> secondEchelonSolutions;
-
-public:
-	LocalSolution();
-	LocalSolution(const LocalSolution & locSol);
-	LocalSolution(Chromosome firstEchelonSol, std::list<Chromosome> secondEchelonSols, std::vector<int> demands, std::vector<std::vector<double>> distances, std::vector<int> customerNodes, std::vector<int> satelliteNodes);
-	int getNumberOfSatellites();
-	int getDepotNode();
-	std::vector<int> getDemands();
-	std::vector<std::vector<double>> getDistances();//cost
-	std::set<int> getCustomerNodes();
-	std::set<int> getSatelliteNodes();
-	std::list<int> getFirstEchelonRoutes();
-	std::list<std::list<int>> getSecondEchelonRoutes();
-	Chromosome getFirstEchelonSolution();
-	std::list<Chromosome> getSecondEchelonSolutions();
-	void updateLocalSolution(Chromosome firstEchelonSolution, std::list<Chromosome> secondEchelonSolutions, std::list<int> firstEchelonRoutes, std::list<std::list<int>> secondEchelonRoutes);
-};
-
 //local search class
 class Localsearch{
 private:
-	LocalSolution currentSolution;
-	LocalSolution bestSolution;
+	TwoEchelonSolution currentSolution;
+	TwoEchelonSolution bestSolution;
 	std::priority_queue<CustomerDepotDifferentialCost, std::vector<CustomerDepotDifferentialCost>, Compare> orderedCustomerList;
-	Chromosome firstEchelonSolution;
-	Chromosome currentSatelliteSolution;
-	Chromosome potentialSatelliteSolution;
-	bool isNodeAdditionFeasible;
+	CVRPSolution firstEchelonSolution;
+	CVRPSolution currentSatelliteSolution;
+	CVRPSolution potentialSatelliteSolution;
+	bool isNodeAdditionFeasible;//needs justification?
 public:
 	Localsearch();
 	Localsearch(const Localsearch & locsrch);
-	Localsearch(LocalSolution currentSolution, LocalSolution bestSolution);
-	LocalSolution getCurrentSolution();
-	LocalSolution getBestSolution();
+	Localsearch(TwoEchelonSolution currentSolution, TwoEchelonSolution bestSolution);
+	TwoEchelonSolution getCurrentSolution();
+	TwoEchelonSolution getBestSolution();
 	void showCurrentSolution();
 	void showBestSolution();
 	void runLocalSearch();
@@ -134,8 +132,4 @@ public:
 
 
 #endif // !LOCALSEARCH_H
-
-
-
-
 
