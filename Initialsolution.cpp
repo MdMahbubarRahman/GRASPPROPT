@@ -3,6 +3,54 @@
 //Implement Initial solution algorihtm here 
 
 //default constructor
+CustomerToSatelliteDistance::CustomerToSatelliteDistance() {
+	customerID = 0;
+	satelliteID = 0;
+	distance = 0;
+}
+
+//copy constructor
+CustomerToSatelliteDistance::CustomerToSatelliteDistance(const CustomerToSatelliteDistance & cusToSatDis) {
+	customerID = cusToSatDis.customerID;
+	satelliteID = cusToSatDis.satelliteID;
+	distance = cusToSatDis.distance;
+}
+
+//constructor
+CustomerToSatelliteDistance::CustomerToSatelliteDistance(int cusID, int satID, double disCost) {
+	customerID = cusID;
+	satelliteID = satID;
+	distance = disCost;
+}
+
+//returns customer id
+int CustomerToSatelliteDistance::getCustomerID() {
+	return customerID;
+}
+
+//returns satellite id
+int CustomerToSatelliteDistance::getSatelliteID() {
+	return satelliteID;
+}
+
+//returns customer to sat distance
+double CustomerToSatelliteDistance::getDistance() {
+	return distance;
+}
+
+//prints customer to satellite distance
+void CustomerToSatelliteDistance::showCustomerToSatelliteDistance() {
+	std::cout << "The customer ID is : " << customerID << std::endl;
+	std::cout << "The satellite ID is : " << satelliteID << std::endl;
+	std::cout << "The distance is : " << distance << std::endl;
+}
+
+//distant operator()/comparator
+bool Distant::operator()(CustomerToSatelliteDistance & a, CustomerToSatelliteDistance & b) {
+	return (a.getDistance() > b.getDistance());
+}
+
+//default constructor
 ProblemParameters::ProblemParameters() {
 	std::cout << "The default constructor of the problem parameter class has been called!";
 }
@@ -408,3 +456,98 @@ TwoEchelonSolution Initialsolution::getTwoEchelonSolution() {
 	return twoEchelonSolution;
 }
 
+//map customers to its nearest satelliltes
+void Initialsolution::mapCustomersToSatellites() {
+	std::set<int> customers = problemParameters.getCustomerNodes();
+	std::set<int> satellites = problemParameters.getSatelliteNodes();
+	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	std::set<int> firstEchelonCustomers = problemParameters.getCustomersMustServeByFirstEchelon();
+	//depot node is set to 0 by default
+	//assign customers to its nearest satellites
+	for (auto it : customers) {
+		if (firstEchelonCustomers.find(it) != firstEchelonCustomers.end()) {
+			satelliteToCustomerMap.insert(std::make_pair(0, it));
+		}
+		else {
+			double cost = 1000000;
+			double variableCost = 0;
+			int sat = 0;
+			for (auto iter : satellites) {
+				variableCost = distance[it][iter];
+				if (variableCost < cost) {
+					cost = variableCost;
+					sat = iter;
+				}
+			}
+			satelliteToCustomerMap.insert(std::make_pair(sat, it));
+		}	
+	}
+}
+
+//update customers clusters so that they satisfy vehicle capacity and max vehicle constraints
+void Initialsolution::makeFeasibleCustomersCluster() {
+	int maxNoFirstEchelonVehicles = problemParameters.getMaxNumberOfVehicleInFirstEchelon();
+	int maxNoSecondEchelonVehicles = problemParameters.getMaxNumberOfVehicleInSecondEchelon();
+	int firstVehicleCapLimit = problemParameters.getFirstEchelonVehicleCapacityLimit();
+	int secondVehicleCapLimit = problemParameters.getSecondEchelonVehicleCapacityLimit();
+	std::map<int, int> customerToDemandMap = problemParameters.getCustomerToDemandMap();
+	std::set<int> satellites = problemParameters.getSatelliteNodes();
+	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	//feasibility check of the clusters and update if necessary
+	for (auto it : satellites) {
+		if (it != 0) {
+			auto itlow = satelliteToCustomerMap.lower_bound(it);
+			auto ithigh = satelliteToCustomerMap.upper_bound(it);
+			int capacity = 0;
+			int size = 0;
+			for (auto & iter = itlow; iter != ithigh; ++iter) {
+				capacity += customerToDemandMap[(*iter).second];
+				CustomerToSatelliteDistance csd((*iter).second, (*iter).first, distance[(*iter).second][(*iter).first]);
+				customerToSatDistList.push(csd);
+				size++;
+			}
+			if (capacity <= (secondVehicleCapLimit*maxNoSecondEchelonVehicles)) {
+				std::cout << "The customer assignment is feasible." << std::endl;
+				satelliteToDemandMap.insert(std::pair<int, int>(it, capacity));
+			}
+			else {
+				capacity = 0;
+				for (int i = 0; i < size; ++i) {
+					CustomerToSatelliteDistance csd = customerToSatDistList.top();
+					if ((capacity + customerToDemandMap[csd.getCustomerID()]) <= (secondVehicleCapLimit * maxNoSecondEchelonVehicles)) {
+						capacity += customerToDemandMap[csd.getCustomerID()];
+						customerToSatDistList.pop();
+					}
+					else {
+						satelliteToDemandMap.insert(std::pair<int, int>(it, capacity));
+						break;
+					}	
+				}
+			}
+			while (!customerToSatDistList.empty()) {
+				CustomerToSatelliteDistance csd = customerToSatDistList.top();
+				auto it = satelliteToCustomerMap.lower_bound(csd.getSatelliteID());
+				for (auto & iter = it; iter != satelliteToCustomerMap.upper_bound(csd.getSatelliteID()); ++iter) {
+					if ((*iter).second == csd.getCustomerID()) {
+						satelliteToCustomerMap.erase(iter);
+						break;
+					}
+				}
+				customerToSatDistList.pop();	
+				freeCustomers.insert(csd.getCustomerID());
+			}
+		}
+	}
+	//try to fit free customers into nearest satellite and update satellite to demand map
+	while (!freeCustomers.empty())	{
+		for (auto sat: satellites) {
+			//find the satellites (including the main depot) with available capacity 
+			//for each free customer find the minimum distant satellite and update 
+			//freecustomer set and the satellites
+			//
+		}
+
+
+	}
+	//tasks for first echelon cluster
+}

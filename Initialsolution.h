@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <list>
+#include <queue>
 
 #include "Geneticalgorithm.h"
 
@@ -19,6 +20,28 @@ the following paper:
 
 */
 
+
+//customer to satellite distance class
+class CustomerToSatelliteDistance {
+private:
+	int customerID;
+	int satelliteID;
+	double distance;
+public:
+	CustomerToSatelliteDistance();
+	CustomerToSatelliteDistance(const CustomerToSatelliteDistance& cusToSatDis);
+	CustomerToSatelliteDistance(int cusID, int satelliteID, double disCost);
+	int getCustomerID();
+	int getSatelliteID();
+	double getDistance();
+	void showCustomerToSatelliteDistance();
+};
+
+//comparator for customer to satellite distance
+class Distant {
+public:
+	bool operator()(CustomerToSatelliteDistance & a, CustomerToSatelliteDistance & b);
+};
 
 //Input parameters
 class ProblemParameters {
@@ -121,11 +144,15 @@ public:
 //initial solution
 class Initialsolution {
 private:
+	std::multimap<int, int> satelliteToCustomerMap;
+	std::map<int, int> satelliteToDemandMap;
+	std::set<int> freeCustomers;
 	FeasibleSolution febSol;
 	Chromosome chrom;
 	CVRPSolution cvrpSol;
 	ProblemParameters problemParameters;
 	TwoEchelonSolution twoEchelonSolution;
+	std::priority_queue<CustomerToSatelliteDistance, std::vector<CustomerToSatelliteDistance>, Distant> customerToSatDistList;
 public:
 	Initialsolution();
 	Initialsolution(const Initialsolution & initSol);
@@ -135,6 +162,8 @@ public:
 	CVRPSolution getCVRPSolution();
 	ProblemParameters getProblemParameters();
 	TwoEchelonSolution getTwoEchelonSolution();
+	void mapCustomersToSatellites();
+	void makeFeasibleCustomersCluster();
 };
 
 #endif // !INITIALSOLUTION_H
