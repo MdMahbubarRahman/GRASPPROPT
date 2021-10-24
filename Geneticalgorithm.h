@@ -52,7 +52,7 @@ public:
 	bool getFeasibilityStatus();
 	int getMaxRouteCapacity();
 	void showChromosome();
-	void updateToFeasibleChromosome(std::vector<int> demand, std::vector<std::vector<double>> distance);
+	void updateToFeasibleChromosome(std::map<int, int> demand, std::vector<std::vector<double>> distance);
 };
 
 
@@ -72,7 +72,7 @@ public:
 	Chromosome getParent1();
 	Chromosome getParent2();
 	Chromosome getOffspring();
-	void performPertiallyMappedCrossover(std::vector<int> demand, std::vector<std::vector<double>> distance);
+	void performPertiallyMappedCrossover(std::map<int, int> demand, std::vector<std::vector<double>> distance);
 };
 
 
@@ -88,7 +88,7 @@ public:
 	Chromosome getMutatedOffspring();
 	void showOriginalChromosome();
 	void showMutatedChromosome();
-	void performChainMutation(std::vector<int> demand, std::vector<std::vector<double>> distance);
+	void performChainMutation(std::map<int, int> demand, std::vector<std::vector<double>> distance);
 }; 
 
 
@@ -106,9 +106,10 @@ class Population {
 	int capacityLimit;
 	int kChainLength;
 	int sWapLength;
-	std::vector<int> demand;
+	std::map<int, int> demand;
 	std::vector<std::vector<double>> distance;
 	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> population;
+	std::vector<int> customerCluster;
 	Chromosome offspring;
 	Chromosome populationBest;
 	Chromosome crossOverChild;
@@ -116,7 +117,7 @@ class Population {
 public:
 	Population();
 	Population(const Population & poplatn);
-	Population(int populationSize,	int numberOfNodes,	int depotNode,	int capacityLimit,	int kChainLength,	int sWapLength, std::vector<int> demand, std::vector<std::vector<double>> distance);
+	Population(int populationSize,	int numberOfNodes,	int depotNode,	int capacityLimit,	int kChainLength,	int sWapLength, std::map<int, int> demand, std::vector<std::vector<double>> distance, std::vector<int> customerCluster);
 	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> getPopulation();
 	Chromosome getOffspring();
 	Chromosome getCrossOverChild();
@@ -129,6 +130,8 @@ public:
 	void manageClones();
 	void performCrossOver();
 	void performMutation();
+	FeasibleSolution getFeasibleSolutionFromChromosome(Chromosome chrom);
+	Chromosome getChromosomeFromFeasibleSolution(FeasibleSolution febSol);
 };
 
 //tournament
@@ -145,8 +148,9 @@ private:
 	int sWapLength;
 	std::vector<Chromosome> generationBestSolutions;
 	std::vector<Chromosome> generationalOffsprings;//need change later
-	std::vector<int> demand;
+	std::map<int, int> demand;
 	std::vector<std::vector<double>> distance;
+	std::vector<int> customerCluster;
 	Population ppl;
 	Chromosome initialSolution;
 	Chromosome incumbentSolution;
@@ -154,7 +158,8 @@ private:
 public:
 	Geneticalgorithm();
 	Geneticalgorithm(const Geneticalgorithm & ga);	
-	Geneticalgorithm(int populationSize, int numberOfNodes, int depotNode, int capacityLimit, int kChainLength, int sWapLength, std::vector<int> demand, std::vector<std::vector<double>> distance);
+	Geneticalgorithm(int populationSize, int numberOfNodes, int depotNode, int capacityLimit, int kChainLength, int sWapLength, std::map<int, int> demand, std::vector<std::vector<double>> distance, std::vector<int> customerCluster);
+	Geneticalgorithm(int depotNode, int capacityLimit, std::map<int, int> demand, std::vector<std::vector<double>> distance, std::vector<int> customerCluster);
 	void populateInitialGeneration();
 	void showCurrentGenerationBestChromosome();
 	std::vector<Chromosome> getGenerationBestSolutions();
@@ -163,8 +168,6 @@ public:
 	void runGeneticAlgorithm();
 	void showGASolution();
 	void showCurrentGeneration();
-	FeasibleSolution getFeasibleSolutionFromChromosome(Chromosome chrom);
-	Chromosome getChromosomeFromFeasibleSolution(FeasibleSolution febSol);
 };
 
 

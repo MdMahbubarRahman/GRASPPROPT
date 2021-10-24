@@ -134,7 +134,7 @@ private:
 	int addToRoute;
 	int numberOfRoutes;
 	int maxRouteCapacity;
-	std::vector<int> demandVector;
+	std::map<int, int> demandVector;
 	std::vector<std::vector<double>> distanceMatrix;
 	TabuList tabuList;
 	FeasibleSolution initialSolution;//input solution to the tabu search algoirthm
@@ -146,7 +146,8 @@ private:
 	AspirationCriteria aspCriteria;
 public:	
 	Tabusearch();//default constructor
-	Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int swapChain, int maxRouteCapacity);//constructor
+	Tabusearch(FeasibleSolution febSol, std::map<int, int> demandVec, std::vector<std::vector<double>> disMat, int kChain, int swapChain, int maxRouteCapacity);//constructor
+	Tabusearch(FeasibleSolution febSol, std::map<int, int> demandVec, std::vector<std::vector<double>> disMat, int maxRouteCapacity);//constructor
 	Tabusearch(const Tabusearch& tabusrch);//copy constructor
 	void updateIncumbentSolution();
 	void generateRouteCustomerMap(FeasibleSolution febSol);

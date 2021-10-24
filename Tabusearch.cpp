@@ -52,7 +52,6 @@ bool TabuList::checkInTabuList(int routeNum, int customerID) {
 					flag = true;
 					break;
 				}
-
 			}
 		}
 	}
@@ -62,7 +61,7 @@ bool TabuList::checkInTabuList(int routeNum, int customerID) {
 //default constructor
 AspirationCriteria::AspirationCriteria() {
 	std::cout << "The default constructor of the Aspiration Criteria class has been called!" << std::endl;
-	currentBestCost = 100000000.0;//Big number
+	currentBestCost = 100000.0;//Big number
 }
 
 //copoy constructor
@@ -238,7 +237,7 @@ std::list<FeasibleSolution> Neighbourhood::getKNeighbourSolutions() {
 //returns the best solution from the neighbourhood
 //&deletes the best solution from the list
 FeasibleSolution Neighbourhood::getBestFromNeighbour() {
-	double cost = 10000000.0;
+	double cost = 100000.0;
 	FeasibleSolution bestSol;
 	std::list<FeasibleSolution>::iterator iter;
 	if (!neighbourSolution.empty()) {
@@ -279,8 +278,8 @@ FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
 //default constructor
 Tabusearch::Tabusearch() {
 	std::cout << "The default tabu search constructor has been called!" << std::endl;
-	kChain = 2;
-	swapChain = 2;
+	kChain = 5;
+	swapChain = 5;
 	dropFromRoute = 0;
 	addToRoute = 0;
 	numberOfRoutes = 1;
@@ -288,9 +287,24 @@ Tabusearch::Tabusearch() {
 }
 
 //constructor
-Tabusearch::Tabusearch(FeasibleSolution febSol, std::vector<int> demandVec, std::vector<std::vector<double>> disMat, int k_Chain, int swap_Chain, int maxCapacity) {
+Tabusearch::Tabusearch(FeasibleSolution febSol, std::map<int, int> demandVec, std::vector<std::vector<double>> disMat, int k_Chain, int swap_Chain, int maxCapacity) {
 	kChain = k_Chain;
 	swapChain = swap_Chain;
+	dropFromRoute = 0;
+	addToRoute = 0;
+	numberOfRoutes = 1;
+	maxRouteCapacity = maxCapacity;
+	demandVector = demandVec;
+	distanceMatrix = disMat;
+	initialSolution = febSol;
+	iterationBestSolution = febSol;
+	incumbentSolution = febSol;
+}
+
+//constructor
+Tabusearch::Tabusearch(FeasibleSolution febSol, std::map<int, int> demandVec, std::vector<std::vector<double>> disMat, int maxCapacity) {
+	kChain = 5;
+	swapChain = 5;
 	dropFromRoute = 0;
 	addToRoute = 0;
 	numberOfRoutes = 1;
@@ -354,7 +368,7 @@ void Tabusearch::generateRouteCustomerMap(FeasibleSolution febSol) {
 			}
 		}	
 	}
-	numberOfRoutes = (routeID-1);
+	flag == true? numberOfRoutes = routeID : numberOfRoutes = (routeID-1);
 }
 
 //randomly select add and drop routes
@@ -385,12 +399,12 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 	for (auto &iter : newRoutes) {
 		if (iterator == addToRoute) {
 			//calculate current Add Route cost
-			int val = 0;
+			int val = sepInt;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				currentAddRouteCost += distanceMatrix[val][(*it)];
 				val = *it;
 			}
-			currentAddRouteCost += distanceMatrix[val][0];
+			currentAddRouteCost += distanceMatrix[val][sepInt];
 			//find the minimum cost entry position 
 			int l = 0;
 			int j = 0;
@@ -398,7 +412,7 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 			int vall = 0;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				if (j == 0) {
-					cost = currentAddRouteCost - distanceMatrix[0][(*it)] + distanceMatrix[0][dropNode] + distanceMatrix[dropNode][(*it)];
+					cost = currentAddRouteCost - distanceMatrix[sepInt][(*it)] + distanceMatrix[sepInt][dropNode] + distanceMatrix[dropNode][(*it)];
 					newAddRouteCost = cost;
 					l = j;
 					vall = *it;
@@ -414,7 +428,7 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 					vall = *it;
 				}
 			}
-			cost = currentAddRouteCost - distanceMatrix[vall][0] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][0];
+			cost = currentAddRouteCost - distanceMatrix[vall][sepInt] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][sepInt];
 			if (cost < newAddRouteCost) {
 				newAddRouteCost = cost;
 				l = iter.size();
@@ -436,24 +450,25 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 		}
 		if (iterator == dropFromRoute) {
 			//calculate current Drop Route cost
-			int val = 0;
+			int val = sepInt;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				currentDropRouteCost += distanceMatrix[val][(*it)];
 				val = *it;
 			}
-			currentDropRouteCost += distanceMatrix[val][0];
+			currentDropRouteCost += distanceMatrix[val][sepInt];
 			//calculate updated Drop Route cost
 			int l = 0;
 			int j = 0;
 			int vall = 0;
-			int preVal = 0;
-			int postVal = 0;
+			int preVal = sepInt;
+			int postVal = sepInt;
 			bool flag = false;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				if (iter.size() == 1) {
 					newDropRouteCost = 0.0;
 					iter.erase(it);
-					iter.push_back(sepInt+1);
+					iter.push_back(sepInt); 
+					//potential point to look at later!
 					break;
 				}
 				else {
@@ -515,26 +530,26 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 	int iterator = 1;
 	for (auto &iter : newRoutes) {
 		if (iterator == firstRoute) {
-			int val = 0;
+			int val = sepInt;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				currentFirstRouteCost += distanceMatrix[val][(*it)];
 				//std::cout << distanceMatrix[val][(*it)] << std::endl;
 				val = *it;
 				firstRt.push_back(val);
 			}
-			currentFirstRouteCost += distanceMatrix[val][0];	
+			currentFirstRouteCost += distanceMatrix[val][sepInt];
 			//std::cout << distanceMatrix[val][0] << std::endl;
 			//std::cout << currentFirstRouteCost << std::endl;
 		}
 		if (iterator == secondRoute) {
-			int val = 0;
+			int val = sepInt;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
 				currentSecondRouteCost += distanceMatrix[val][(*it)];
 				//std::cout << distanceMatrix[val][(*it)] << std::endl;
 				val = *it;
 				secondRt.push_back(val);
 			}
-			currentSecondRouteCost += distanceMatrix[val][0];	
+			currentSecondRouteCost += distanceMatrix[val][sepInt];
 			//std::cout << distanceMatrix[val][0] << std::endl;
 			//std::cout << currentSecondRouteCost << std::endl;
 		}
@@ -572,23 +587,23 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 	for (int i = 0; i < firstRt.size(); ++i) {
 		for (int j = 0; j < secondRt.size(); ++j) {
 			if (firstRt.size() ==1) {
-				firstPreVal = 0;
-				firstPostVal = 0;
+				firstPreVal = sepInt;
+				firstPostVal = sepInt;
 				//std::cout << "first if" << std::endl;
 			}
 			if (secondRt.size() == 1) {
-				secondPreVal = 0;
-				secondPostVal = 0;
+				secondPreVal = sepInt;
+				secondPostVal = sepInt;
 				//std::cout << "second if" << std::endl;
 			}
 			if (firstRt.size() > 1 && i==0) {
-				firstPreVal = 0;
+				firstPreVal = sepInt;
 				firstPostVal = firstRt.at(i+1);
 				//std::cout << "third if" << std::endl;
 			}
 			if (firstRt.size() > 1 && i == (firstRt.size()-1)) {
 				firstPreVal = firstRt.at(i - 1);
-				firstPostVal = 0;
+				firstPostVal = sepInt;
 				//std::cout << "fourth if" << std::endl;
 			}
 			if (firstRt.size() > 1 && i < (firstRt.size() - 1) && i > 0) {
@@ -597,13 +612,13 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 				//std::cout << "fifth if" << std::endl;
 			}
 			if (secondRt.size() > 1 && j == 0) {
-				secondPreVal = 0;
+				secondPreVal = sepInt;
 				secondPostVal = secondRt.at(j + 1);
 				//std::cout << "sixth if" << std::endl;
 			}
 			if (secondRt.size() > 1 && j == (secondRt.size() - 1)) {
 				secondPreVal = secondRt.at(j - 1);
-				secondPostVal = 0;
+				secondPostVal = sepInt;
 				//std::cout << "seventh if" << std::endl;
 			}
 			if (secondRt.size() > 1 && j < (secondRt.size() - 1) && j > 0) {
@@ -629,7 +644,7 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 			for (auto& it : iter) {
 				if (i == swapInfo.firstNodeLocation && swapInfo.firstNode == it) {
 					it = swapInfo.secondNode;
-					std::cout << it << std::endl;
+					//std::cout << it << std::endl;
 				}
 				solution.push_back(it);
 				i++;
@@ -641,7 +656,7 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 			for (auto& it : iter) {
 				if (j == swapInfo.secondNodeLocation && swapInfo.secondNode == it) {
 					it = swapInfo.firstNode;
-					std::cout << it << std::endl;
+					//std::cout << it << std::endl;
 				}
 				solution.push_back(it);
 				j++;
@@ -700,8 +715,8 @@ void Tabusearch::generateKChainNeighbourSolutions() {
 		//otherwise get new best solution which is not tabu
 		while(!neighbourHood.getNeighbourSolutions().empty()) {
 			FeasibleSolution febSol = neighbourHood.getBestFromNeighbour();
-			std::cout << "The iteration best solution is : " << std::endl;
-			febSol.showSolution();
+			//std::cout << "The iteration best solution is : " << std::endl;
+			//febSol.showSolution();
 			int srcRoute = febSol.getSourceRoute();
 			int node = febSol.getAddedNode();
 			if (tabuList.checkInTabuList(srcRoute, node)) {
@@ -716,6 +731,7 @@ void Tabusearch::generateKChainNeighbourSolutions() {
 			else {
 				iterationBestSolution = febSol;
 				tabuList.addToTabuList(srcRoute, node);
+				aspCriteria.updateCurrentBestCost(febSol.getCost());
 				//tabuList.showTabuList();
 				break;
 			}
@@ -740,8 +756,8 @@ void Tabusearch::generateOneSwapSolutions(){
 		double newCost = iterationBestSolution.getCost();
 		int sepInt = iterationBestSolution.getSeparatorIntVal();
 		FeasibleSolution neighbour = generateNeighbourByOneSwap(newRoutes, newCost, sepInt, dropFromRoute, addToRoute);
-		std::cout << "The solution of iteration : " << i << "is : " << std::endl;
-		neighbour.showSolution();
+		//std::cout << "The solution of iteration : " << i << "is : " << std::endl;
+		//neighbour.showSolution();
 		//check the neighbour solution with tabu moves and aspiration criterias
 		int srcRoute = neighbour.getSourceRoute();
 		int node = neighbour.getAddedNode();
@@ -756,6 +772,7 @@ void Tabusearch::generateOneSwapSolutions(){
 		else {
 			iterationBestSolution = neighbour;
 			tabuList.addToTabuList(srcRoute, node);
+			aspCriteria.updateCurrentBestCost(neighbour.getCost());
 		}
 		//add neighbour solutions to k neighbour solution list
 		updateIncumbentSolution();
@@ -764,20 +781,39 @@ void Tabusearch::generateOneSwapSolutions(){
 
 //runs tabu search algoirthm
 void Tabusearch::runTabuSearch() {
-	int MaxIter = 10;
+	int MaxIter = 20;
+	int nonImprovingIterationLimit = 6;
 	auto start = high_resolution_clock::now();
 	using std::chrono::duration;
 	//run the tabu search algoirhtm
+	int counter = 0;
+	double prevCost = 100000;
+	double currentCost = 0;
+	int iter = 0;
 	for (int i = 0; i < MaxIter; ++i) {
+		iter++;
 		generateKChainNeighbourSolutions();
 		generateOneSwapSolutions();
+		currentCost = incumbentSolution.getCost();
+		if (currentCost < prevCost) {
+			prevCost = currentCost;
+			counter = 0;
+		}
+		else {
+			counter++;
+		}
+		if (counter == nonImprovingIterationLimit) {
+			break;
+		}
 	}
 	auto stop = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = stop - start;
 	showTabuSolution();
 	double secDuration = double(ms_double.count()) / 1000;
 	std::cout << secDuration << " seconds" << std::endl;
-	
+	std::cout << "Show initial solution" << std::endl;
+	initialSolution.showSolution();
+	std::cout << "\nThe number of iterations : " << iter << ";" << std::endl;	
 }
 
 //performs TSP heuristics on incumbent solution
