@@ -95,6 +95,7 @@ public:
 	CVRPSolution();//default constructor
 	CVRPSolution(std::vector<int> sol, std::set<int> customers, std::map<int, int> customerTodemand, double cost, int satelliteNode, int maxRouteCapacity, int totalDemandSatisfied, int numberOfRoutes);//constructor
 	CVRPSolution(const CVRPSolution& sol); //copy constructor
+	CVRPSolution(Chromosome & chromSol, std::set<int> customers, std::map<int, int> customerTodemand); //constructor
 	void showSolution() const;
 	void showCustomers();
 	void showCustomerTodemandMap();
@@ -138,16 +139,20 @@ public:
 	std::set<int> getSatelliteNodes();
 	CVRPSolution getFirstEchelonSolution();
 	std::list<CVRPSolution> getSecondEchelonSolutions();
+	void insertFirstEchelonSolution(CVRPSolution cvrp);
+	void insertSecondEchelonSolution(CVRPSolution cvrp);
 	void showTwoEchelonSolution();
+	void clearSecondEchelonSolutionList();
+	void populateTwoEchelonSolution(std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes);
 };
 
 //initial solution
 class Initialsolution {
 private:
+	bool isProblemFeasible;
 	std::multimap<int, int> satelliteToCustomerMap;
 	std::map<int, int> satelliteToDemandMap;
 	std::set<int> freeCustomers;
-	FeasibleSolution febSol;
 	Chromosome chrom;
 	CVRPSolution cvrpSol;
 	ProblemParameters problemParameters;
@@ -156,19 +161,23 @@ private:
 public:
 	Initialsolution();
 	Initialsolution(const Initialsolution & initSol);
-	Initialsolution(FeasibleSolution febSol, Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution);
-	FeasibleSolution getFeasibleSolution();
+	Initialsolution(Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution);
 	Chromosome getChromosome();
 	CVRPSolution getCVRPSolution();
 	ProblemParameters getProblemParameters();
 	TwoEchelonSolution getTwoEchelonSolution();
+	bool getFeasibilityStatus();
+	std::multimap<int, int> getSatelliteToCustomerMap();
+	std::map<int, int> getSatelliteToDemandMap();
+	std::set<int> getFreeCustomers();
+	std::priority_queue<CustomerToSatelliteDistance, std::vector<CustomerToSatelliteDistance>, Distant> getCustomerToSatDistList();
 	void mapCustomersToSatellites();
 	void makeFeasibleCustomersCluster();
+	void generateCVRPSolutions();
+	void generateTwoEchelonSolution();
+	void runInitialSolution();
 };
 
 #endif // !INITIALSOLUTION_H
-
-
-
 
 

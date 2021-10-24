@@ -221,12 +221,41 @@ CVRPSolution::CVRPSolution(const CVRPSolution& febSol) {
 	satelliteNode = febSol.satelliteNode;
 	totalDemandSatisfied = febSol.totalDemandSatisfied;
 	numberOfRoutes = febSol.numberOfRoutes;
+	maxRouteCapacity = febSol.maxRouteCapacity;
 	if (!febSol.solution.empty())
 		solution = febSol.solution;
 	else {
 		std::cout << "The solution vector is empty! CVRP Solution object could not be formed." << std::endl;
 	}
 }
+
+//constructor
+CVRPSolution::CVRPSolution(Chromosome & chromSol, std::set<int> cuss, std::map<int, int> cusTodemand) {
+	solution = chromSol.getChromosomeRepresentation();
+	maxRouteCapacity = chromSol.getMaxRouteCapacity();
+	customers = cuss;
+	customerTodemand = cusTodemand;
+	solCost = chromSol.getFitness();
+	satelliteNode = chromSol.getSepInt();
+	for (auto it : customers) {
+		totalDemandSatisfied += customerTodemand[it];
+	}
+	int routeID = 1;
+	bool flag = false;
+	for (auto it = solution.begin(); it != solution.end(); ++it) {
+		if (*it != satelliteNode) {
+			flag = true;
+		}
+		else {
+			if (flag) {
+				routeID += 1;
+				flag = false;
+			}
+		}
+	}
+	flag == true ? numberOfRoutes = routeID : numberOfRoutes = (routeID - 1);
+}
+
 
 //prints the feasible solution object
 void CVRPSolution::showSolution() const {
@@ -241,6 +270,8 @@ void CVRPSolution::showSolution() const {
 		std::cout << "The amount of the demand satisfied is : " << totalDemandSatisfied << std::endl;
 		std::cout << "The number of vechile routes generated is : " << numberOfRoutes << std::endl;
 		std::cout << "The number of customers satisfied is : " << customers.size() << std::endl;
+		std::cout << "The maximum capacity of a route is : " << maxRouteCapacity << std::endl;
+		//no need to show customer to demand
 	}
 	else
 		std::cout << "The solution is empty!" << std::endl;
@@ -402,20 +433,50 @@ std::list<CVRPSolution> TwoEchelonSolution::getSecondEchelonSolutions() {
 	return secondEchelonSolutions;
 }
 
+//inserts first echelon solution
+void TwoEchelonSolution::insertFirstEchelonSolution(CVRPSolution cvrp) {
+	firstEchelonSolution = cvrp;
+}
+
+//inserts second echelon solution
+void TwoEchelonSolution::insertSecondEchelonSolution(CVRPSolution cvrp) {
+	secondEchelonSolutions.push_back(cvrp);
+}
+
 //prints two echelon solution
 void TwoEchelonSolution::showTwoEchelonSolution() {
 	//needs immplementation
 }
 
+//clears second echelon solutions
+void TwoEchelonSolution::clearSecondEchelonSolutionList() {
+	secondEchelonSolutions.clear();
+}
+
+//populates two echelon solution
+void TwoEchelonSolution::populateTwoEchelonSolution(std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> disMatrix, std::set<int> cusNodes, std::set<int> satNodes) {
+	numberOfActiveSatellites = secondEchelonSolutions.size();
+	customerToDemandMap = cusToDemandMap;
+	satelliteToDemandMap = satToDemandMap;
+	distanceMatrix = disMatrix;
+	customerNodes = cusNodes;
+	satelliteNodes = satNodes;
+	solutionFitness = firstEchelonSolution.getCost();
+	for (auto & it : secondEchelonSolutions) {
+		solutionFitness += it.getCost();
+	}
+}
+
 //default constructor
 Initialsolution::Initialsolution() {
 	std::cout << "The default constructor of the initial solution has been called!" << std::endl;
+	isProblemFeasible = true;
 }
 
 //copy constructor
 Initialsolution::Initialsolution(const Initialsolution& initSol) {
 	std::cout << "The copy constructor of the initial solution has been called!" << std::endl;
-	febSol = initSol.febSol;
+	isProblemFeasible = initSol.isProblemFeasible;
 	chrom  = initSol.chrom;
 	cvrpSol = initSol.cvrpSol;
 	problemParameters = initSol.problemParameters;
@@ -423,17 +484,12 @@ Initialsolution::Initialsolution(const Initialsolution& initSol) {
 }
 
 //constructor
-Initialsolution::Initialsolution(FeasibleSolution febSol, Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution) {
-	febSol = febSol;
+Initialsolution::Initialsolution(Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution) {
+	isProblemFeasible = true;
 	chrom = chrom;
 	cvrpSol = cvrpSol;
 	problemParameters = problemParameters;
 	twoEchelonSolution = twoEchelonSolution;
-}
-
-//returns feasible solution
-FeasibleSolution Initialsolution::getFeasibleSolution() {
-	return febSol;
 }
 
 //returns chromosome
@@ -454,6 +510,31 @@ ProblemParameters Initialsolution::getProblemParameters() {
 //returns two echelon solution
 TwoEchelonSolution Initialsolution::getTwoEchelonSolution() {
 	return twoEchelonSolution;
+}
+
+//returns satellite to customer map
+std::multimap<int, int> Initialsolution::getSatelliteToCustomerMap() {
+	return satelliteToCustomerMap;
+}
+
+//rerturns satellite to demand map
+std::map<int, int> Initialsolution::getSatelliteToDemandMap() {
+	return satelliteToDemandMap;
+}
+
+//returns free customers
+std::set<int> Initialsolution::getFreeCustomers() {
+	return freeCustomers;
+}
+
+//returns cutomer to satellite distance priority queue
+std::priority_queue<CustomerToSatelliteDistance, std::vector<CustomerToSatelliteDistance>, Distant> Initialsolution::getCustomerToSatDistList() {
+	return customerToSatDistList;
+}
+
+//returns feasibility status
+bool Initialsolution::getFeasibilityStatus() {
+	return isProblemFeasible;
 }
 
 //map customers to its nearest satelliltes
@@ -538,16 +619,106 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 			}
 		}
 	}
-	//try to fit free customers into nearest satellite and update satellite to demand map
-	while (!freeCustomers.empty())	{
-		for (auto sat: satellites) {
-			//find the satellites (including the main depot) with available capacity 
-			//for each free customer find the minimum distant satellite and update 
-			//freecustomer set and the satellites
-			//
-		}
-
-
+	//update depot demand
+	int demand = 0;
+	for (auto& it : satelliteToDemandMap) {
+		demand += it.second;
 	}
-	//tasks for first echelon cluster
+	for (auto it : problemParameters.getCustomersMustServeByFirstEchelon()) {
+		demand += customerToDemandMap[it];
+	}
+	satelliteToDemandMap.insert(std::pair<int, int>(0, demand));
+	//assign free customers to satellites
+	std::map<int, int> satelliteToAvailableCapacityMap;
+	for (auto it: satellites) {
+		if (it != 0) {
+			satelliteToAvailableCapacityMap.insert(std::pair<int, int>(it, (maxNoSecondEchelonVehicles * secondVehicleCapLimit) - satelliteToDemandMap[it]));
+		}
+		else {
+			satelliteToAvailableCapacityMap.insert(std::pair<int, int>(it, (maxNoFirstEchelonVehicles * firstVehicleCapLimit) - satelliteToDemandMap[it]));
+		}
+	}
+	while (!freeCustomers.empty()){
+		auto cus = freeCustomers.begin();
+		double cost = 100000;
+		double difCost = 0;
+		int sat = 100000;
+		for (auto it: satellites) {
+			difCost = distance[*cus][it];
+			if (difCost < cost && (customerToDemandMap[*cus] <= satelliteToAvailableCapacityMap[it])) {
+				cost = difCost;
+				sat = it;
+			}
+		}
+		if (satellites.find(sat) != satellites.end()) {
+			int currentLoad = satelliteToDemandMap[sat] + customerToDemandMap[*cus];
+			satelliteToDemandMap.erase(sat);
+			satelliteToDemandMap.insert(std::pair<int, int>(sat, currentLoad));
+			int currentCap = satelliteToAvailableCapacityMap[sat] - customerToDemandMap[*cus];
+			satelliteToAvailableCapacityMap.erase(sat);
+			satelliteToAvailableCapacityMap.insert(std::pair<int, int>(sat, currentCap));
+			satelliteToCustomerMap.insert(std::make_pair(sat, *cus));
+			freeCustomers.erase(cus);
+		}
+		else {
+			std::cout << "\nThe Two Echelon CVRP problem is infeasible! The satellites available capacity is very limited!" << std::endl;
+			isProblemFeasible = false;
+			break;
+		}
+	}
 }
+
+//generates cvrp solution
+void Initialsolution::generateCVRPSolutions() {
+	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	int capLimitFirst = problemParameters.getFirstEchelonVehicleCapacityLimit();
+	int capLimitSecond = problemParameters.getSecondEchelonVehicleCapacityLimit();
+	std::map<int, int> cusToDemand = problemParameters.getCustomerToDemandMap();
+	//update cusToDemand map
+	for (auto it : satelliteToDemandMap) {
+		cusToDemand.insert(it);
+	}
+	//check feasibility
+	if (isProblemFeasible == false) {
+		std::cout << "\nThe problem is infeasible!" << std::endl;
+		std::cout << "The algorithm terminated." << std::endl;
+	}
+	else {
+		//solve cvrp problem
+		twoEchelonSolution.clearSecondEchelonSolutionList();
+		for (auto & iter : satelliteToCustomerMap) {
+			int satID = iter.first;
+			std::vector<int> customerSet;
+			for (auto it = satelliteToCustomerMap.lower_bound(iter.first); it != satelliteToCustomerMap.upper_bound(iter.first); ++it) {
+				customerSet.push_back((*it).second);
+			}
+			int capLimit = 0;
+			satID == 0 ? capLimit = capLimitFirst : capLimit = capLimitSecond;
+			Geneticalgorithm ga(satID, capLimit, cusToDemand, distance, customerSet);
+			ga.runGeneticAlgorithm();
+			chrom = ga.getGASolution();
+			std::set<int> customers;
+			for (auto it: customerSet) {
+				customers.insert(it);
+			}
+			cvrpSol = CVRPSolution(chrom, customers, cusToDemand);
+			satID == 0 ? twoEchelonSolution.insertFirstEchelonSolution(cvrpSol) : twoEchelonSolution.insertSecondEchelonSolution(cvrpSol);
+		}
+	}
+}
+
+//generates two echelon solution
+void Initialsolution::generateTwoEchelonSolution() {
+	twoEchelonSolution.populateTwoEchelonSolution(problemParameters.getCustomerToDemandMap(), satelliteToDemandMap, problemParameters.getDistanceMatrix(), problemParameters.getCustomerNodes(), problemParameters.getSatelliteNodes());
+}
+
+//run initial solution algoirthm to get initial two echelon solution
+void Initialsolution::runInitialSolution() {
+	mapCustomersToSatellites();
+	makeFeasibleCustomersCluster();
+	generateCVRPSolutions();
+	generateTwoEchelonSolution();
+	twoEchelonSolution.showTwoEchelonSolution();
+}
+
+
