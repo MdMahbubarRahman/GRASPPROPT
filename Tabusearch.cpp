@@ -392,7 +392,7 @@ void Tabusearch::selectRandomAddAndDropRoutes() {
 //generate neighbour solution by Add and Drop heuristic
 FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>> newRoutes, double newCost, int sepInt, int addToRoute, int dropFromRoute, int dropNode) {
 	double currentAddRouteCost = 0.0;
-	double newAddRouteCost = 0.0;
+	double newAddRouteCost = 100000.0;
 	double currentDropRouteCost = 0.0;
 	double newDropRouteCost = 0.0;
 	int iterator = 1;
@@ -409,29 +409,20 @@ FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>
 			int l = 0;
 			int j = 0;
 			double cost = 0.0;
-			int vall = 0;
+			val = sepInt;
 			for (auto it = iter.begin(); it != iter.end(); ++it) {
-				if (j == 0) {
-					cost = currentAddRouteCost - distanceMatrix[sepInt][(*it)] + distanceMatrix[sepInt][dropNode] + distanceMatrix[dropNode][(*it)];
+				cost = currentAddRouteCost - distanceMatrix[val][*it] + distanceMatrix[val][dropNode] + distanceMatrix[dropNode][*it];
+				if (cost < newAddRouteCost) {
 					newAddRouteCost = cost;
 					l = j;
-					vall = *it;
-					j++;
 				}
-				else {
-					cost = currentAddRouteCost - distanceMatrix[vall][(*it)] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][(*it)];
-					if (cost < newAddRouteCost) {
-						newAddRouteCost = cost;
-						l = j;
-					}
-					j++;
-					vall = *it;
-				}
+				val = *it;
+				j++;
 			}
-			cost = currentAddRouteCost - distanceMatrix[vall][sepInt] + distanceMatrix[vall][dropNode] + distanceMatrix[dropNode][sepInt];
+			cost = currentAddRouteCost - distanceMatrix[val][sepInt] + distanceMatrix[val][dropNode] + distanceMatrix[dropNode][sepInt];
 			if (cost < newAddRouteCost) {
 				newAddRouteCost = cost;
-				l = iter.size();
+				l = j;
 			}
 			//update Add route  
 			int n = 0;
@@ -527,6 +518,8 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 	//new route vectors
 	std::vector<int> firstRt;
 	std::vector<int> secondRt;
+	int firstRouteCapacity = 0;
+	int secondRouteCapacity = 0;
 	int iterator = 1;
 	for (auto &iter : newRoutes) {
 		if (iterator == firstRoute) {
@@ -536,6 +529,7 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 				//std::cout << distanceMatrix[val][(*it)] << std::endl;
 				val = *it;
 				firstRt.push_back(val);
+				firstRouteCapacity += demandVector[*it];
 			}
 			currentFirstRouteCost += distanceMatrix[val][sepInt];
 			//std::cout << distanceMatrix[val][0] << std::endl;
@@ -548,6 +542,7 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 				//std::cout << distanceMatrix[val][(*it)] << std::endl;
 				val = *it;
 				secondRt.push_back(val);
+				secondRouteCapacity += demandVector[*it];
 			}
 			currentSecondRouteCost += distanceMatrix[val][sepInt];
 			//std::cout << distanceMatrix[val][0] << std::endl;
@@ -630,7 +625,13 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 			secondCost = currentSecondRouteCost - double(distanceMatrix[secondPreVal][secondRt.at(j)]) - double(distanceMatrix[secondRt.at(j)][secondPostVal]) + double(distanceMatrix[secondPreVal][firstRt.at(i)]) + double(distanceMatrix[firstRt.at(i)][secondPostVal]);
 			cost = firstCost + secondCost;
 			if (cost < swapInfo.finalCost) {
-				swapInfo.updateSwapInfo(i, j, firstRt.at(i), secondRt.at(j), cost, firstCost, secondCost);
+				if ((firstRouteCapacity - demandVector[firstRt.at(i)] + demandVector[secondRt.at(j)]) <= maxRouteCapacity && (secondRouteCapacity + demandVector[firstRt.at(i)] - demandVector[secondRt.at(j)]) <= maxRouteCapacity) {
+					swapInfo.updateSwapInfo(i, j, firstRt.at(i), secondRt.at(j), cost, firstCost, secondCost);
+					std::cout << "One swap is feasible" << std::endl;
+				}
+				else {
+					std::cout << "One swap is not feasible" << std::endl;
+				}
 			}
 		}
 	}
@@ -686,6 +687,9 @@ void Tabusearch::generateKChainNeighbourSolutions() {
 		std::cout << "\nThe k iteration number is : " << i << std::endl;
 		//randomly choose routes for Add and Drop heuristic
 		selectRandomAddAndDropRoutes();
+		if (dropFromRoute == addToRoute) {
+			break;
+		}
 		//generate neighbour solutions
 		for (auto it = routCustomerMap.lower_bound(dropFromRoute); it != routCustomerMap.upper_bound(dropFromRoute); ++it) {
 			//check capacity constraint 
@@ -751,6 +755,9 @@ void Tabusearch::generateOneSwapSolutions(){
 		std::cout << "\nThe swap iteration number is : " << i << std::endl;
 		//randomly choose routes for Add and Drop heuristic
 		selectRandomAddAndDropRoutes();
+		if (dropFromRoute == addToRoute) {
+			break;
+		}
 		//generate neighbour solution by onoe swap heuristic
 		std::list<std::list<int>> newRoutes = listOfRoutes;
 		double newCost = iterationBestSolution.getCost();

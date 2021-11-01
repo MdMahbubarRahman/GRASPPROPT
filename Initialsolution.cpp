@@ -69,16 +69,16 @@ ProblemParameters::ProblemParameters(const ProblemParameters& probParam) {
 }
 
 //constructor
-ProblemParameters::ProblemParameters(std::map<int, int> customerToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes, std::set<int> customersMustServeByFirstEchelon, int firstEchelonVehicleCapacityLimit, int secondEchelonVehicleCapacityLimit, int maxNumberOfVehicleInFirstEchelon, int maxNumberOfVehicleInSecondEchelon) {
-	customerToDemandMap = customerToDemandMap;
-	distanceMatrix = distanceMatrix;
-	customerNodes = customerNodes;
-	satelliteNodes = satelliteNodes;
-	customersMustServeByFirstEchelon = customersMustServeByFirstEchelon;
-	firstEchelonVehicleCapacityLimit = firstEchelonVehicleCapacityLimit;
-	secondEchelonVehicleCapacityLimit = secondEchelonVehicleCapacityLimit;
-	maxNumberOfVehicleInFirstEchelon = maxNumberOfVehicleInFirstEchelon;
-	maxNumberOfVehicleInSecondEchelon = maxNumberOfVehicleInSecondEchelon;
+ProblemParameters::ProblemParameters(std::map<int, int> cusToDemandMap, std::vector<std::vector<double>> distMatrix, std::set<int> cusNodes, std::set<int> satNodes, std::set<int> cusMustServeByFirstEchelon, int firstEchelonVehicleCapLimit, int secondEchelonVehicleCapLimit, int maxNumOfVehicleInFirstEchelon, int maxNumOfVehicleInSecondEchelon) {
+	customerToDemandMap = cusToDemandMap;
+	distanceMatrix = distMatrix;
+	customerNodes = cusNodes;
+	satelliteNodes = satNodes;
+	customersMustServeByFirstEchelon = cusMustServeByFirstEchelon;
+	firstEchelonVehicleCapacityLimit = firstEchelonVehicleCapLimit;
+	secondEchelonVehicleCapacityLimit = secondEchelonVehicleCapLimit;
+	maxNumberOfVehicleInFirstEchelon = maxNumOfVehicleInFirstEchelon;
+	maxNumberOfVehicleInSecondEchelon = maxNumOfVehicleInSecondEchelon;
 }
 
 //prints customer to demand map
@@ -214,7 +214,7 @@ CVRPSolution::CVRPSolution(std::vector<int> sol, std::set<int> custs, std::map<i
 }
 
 //copy constructor
-CVRPSolution::CVRPSolution(const CVRPSolution& febSol) {
+CVRPSolution::CVRPSolution(const CVRPSolution & febSol) {
 	customers = febSol.customers;
 	customerTodemand = febSol.customerTodemand;
 	solCost = febSol.solCost;
@@ -237,8 +237,9 @@ CVRPSolution::CVRPSolution(Chromosome & chromSol, std::set<int> cuss, std::map<i
 	customerTodemand = cusTodemand;
 	solCost = chromSol.getFitness();
 	satelliteNode = chromSol.getSepInt();
-	for (auto it : customers) {
-		totalDemandSatisfied += customerTodemand[it];
+	totalDemandSatisfied = 0;
+	for (auto it : cuss) {
+		totalDemandSatisfied += cusTodemand[it];
 	}
 	int routeID = 1;
 	bool flag = false;
@@ -369,6 +370,7 @@ TwoEchelonSolution::TwoEchelonSolution(const TwoEchelonSolution& locSol) {
 	solutionFitness = locSol.solutionFitness;
 	numberOfActiveSatellites = locSol.numberOfActiveSatellites;
 	customerToDemandMap = locSol.customerToDemandMap;
+	satelliteToDemandMap = locSol.satelliteToDemandMap;
 	distanceMatrix = locSol.distanceMatrix;
 	customerNodes = locSol.customerNodes;
 	satelliteNodes = locSol.satelliteNodes;
@@ -445,7 +447,16 @@ void TwoEchelonSolution::insertSecondEchelonSolution(CVRPSolution cvrp) {
 
 //prints two echelon solution
 void TwoEchelonSolution::showTwoEchelonSolution() {
-	//needs immplementation
+	std::cout << "\nThe cost of the two echelon solution is : " << solutionFitness << std::endl;
+	std::cout << "\nThe first echelon solution is : " << std::endl;
+	firstEchelonSolution.showSolution();
+	std::cout << "\nThe second echelon solutions are : " << std::endl;
+	int i = 1;
+	for (auto &it: secondEchelonSolutions) {
+		std::cout << "\nSecond echelon cvrp sol no : " << i << std::endl;
+		it.showSolution();
+		i++;
+	}
 }
 
 //clears second echelon solutions
@@ -484,12 +495,18 @@ Initialsolution::Initialsolution(const Initialsolution& initSol) {
 }
 
 //constructor
-Initialsolution::Initialsolution(Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution) {
+Initialsolution::Initialsolution(Chromosome chrm, CVRPSolution cvrpSl, ProblemParameters problemParam, TwoEchelonSolution twoEchelonSol) {
 	isProblemFeasible = true;
-	chrom = chrom;
-	cvrpSol = cvrpSol;
-	problemParameters = problemParameters;
-	twoEchelonSolution = twoEchelonSolution;
+	chrom = chrm;
+	cvrpSol = cvrpSl;
+	problemParameters = problemParam;
+	twoEchelonSolution = twoEchelonSol;
+}
+
+//constructor
+Initialsolution::Initialsolution(ProblemParameters probParameters) {
+	problemParameters = probParameters;
+	isProblemFeasible = true;
 }
 
 //returns chromosome
@@ -546,8 +563,10 @@ void Initialsolution::mapCustomersToSatellites() {
 	//depot node is set to 0 by default
 	//assign customers to its nearest satellites
 	for (auto it : customers) {
+		//std::cout << it << std::endl;
 		if (firstEchelonCustomers.find(it) != firstEchelonCustomers.end()) {
 			satelliteToCustomerMap.insert(std::make_pair(0, it));
+			std::cout << "First echelon priority found!" << std::endl;
 		}
 		else {
 			double cost = 1000000;
@@ -562,6 +581,11 @@ void Initialsolution::mapCustomersToSatellites() {
 			}
 			satelliteToCustomerMap.insert(std::make_pair(sat, it));
 		}	
+	}
+	std::cout << "\nThe customer to satellite map is done" << std::endl;
+	std::cout << "The map is : " << std::endl;
+	for (auto & it: satelliteToCustomerMap) {
+		std::cout << "satellite : " << it.first << " customer : " << it.second << std::endl;
 	}
 }
 
@@ -582,19 +606,26 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 			int capacity = 0;
 			int size = 0;
 			for (auto & iter = itlow; iter != ithigh; ++iter) {
+				//std::cout << "satellite : " << (*iter).first << " customer : " << (*iter).second << std::endl;
 				capacity += customerToDemandMap[(*iter).second];
+				//std::cout << "capacity : " << capacity << std::endl;
 				CustomerToSatelliteDistance csd((*iter).second, (*iter).first, distance[(*iter).second][(*iter).first]);
+				//csd.showCustomerToSatelliteDistance();
 				customerToSatDistList.push(csd);
 				size++;
 			}
 			if (capacity <= (secondVehicleCapLimit*maxNoSecondEchelonVehicles)) {
 				std::cout << "The customer assignment is feasible." << std::endl;
 				satelliteToDemandMap.insert(std::pair<int, int>(it, capacity));
+				while (!customerToSatDistList.empty()) {
+					customerToSatDistList.pop();
+				}
 			}
 			else {
 				capacity = 0;
 				for (int i = 0; i < size; ++i) {
 					CustomerToSatelliteDistance csd = customerToSatDistList.top();
+					std::cout << "In the else looop" << std::endl;
 					if ((capacity + customerToDemandMap[csd.getCustomerID()]) <= (secondVehicleCapLimit * maxNoSecondEchelonVehicles)) {
 						capacity += customerToDemandMap[csd.getCustomerID()];
 						customerToSatDistList.pop();
@@ -618,25 +649,44 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 				freeCustomers.insert(csd.getCustomerID());
 			}
 		}
+		else {
+			//calculate customers demand load to the depot
+			auto itlow = satelliteToCustomerMap.lower_bound(it);
+			auto ithigh = satelliteToCustomerMap.upper_bound(it);
+			int capacity = 0;
+			for (auto & iter = itlow; iter != ithigh; ++iter) {
+				capacity += customerToDemandMap[(*iter).second];
+			}
+			satelliteToDemandMap.insert(std::pair<int, int>(it, capacity));
+		}
 	}
-	//update depot demand
+	//show free customers
+	std::cout << "\nFree customers are : " << std::endl;
+	for (auto it : freeCustomers) {
+		std::cout << it << std::endl;
+	}
+	//show total demand
 	int demand = 0;
-	for (auto& it : satelliteToDemandMap) {
+	for (auto & it : satelliteToDemandMap) {
 		demand += it.second;
 	}
-	for (auto it : problemParameters.getCustomersMustServeByFirstEchelon()) {
-		demand += customerToDemandMap[it];
-	}
-	satelliteToDemandMap.insert(std::pair<int, int>(0, demand));
+	std::cout << "\nInitial allocated total demand is : " << demand << std::endl;
 	//assign free customers to satellites
 	std::map<int, int> satelliteToAvailableCapacityMap;
 	for (auto it: satellites) {
 		if (it != 0) {
 			satelliteToAvailableCapacityMap.insert(std::pair<int, int>(it, (maxNoSecondEchelonVehicles * secondVehicleCapLimit) - satelliteToDemandMap[it]));
+			std::cout << "satellitle : " << it << " satisfied demand : " << satelliteToDemandMap[it] << std::endl;
 		}
 		else {
 			satelliteToAvailableCapacityMap.insert(std::pair<int, int>(it, (maxNoFirstEchelonVehicles * firstVehicleCapLimit) - satelliteToDemandMap[it]));
+			std::cout << "depot : " << it << " satisfied demand : " << satelliteToDemandMap[it] << std::endl;
 		}
+	}
+	//show available capacity in each satellite
+	std::cout << "\nInitial satellite to available capacity map : " << std::endl;
+	for (auto it : satellites) {
+		std::cout << "satellilte : " << it << " available capacity : " << satelliteToAvailableCapacityMap[it] << std::endl;
 	}
 	while (!freeCustomers.empty()){
 		auto cus = freeCustomers.begin();
@@ -666,6 +716,41 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 			break;
 		}
 	}
+	//show satellite to customer cluster
+	std::cout << "\nShow feasible satellite to customer map : " << std::endl;
+	for (auto & it: satelliteToCustomerMap) {
+		std::cout << "satellite : " << it.first << " customer : " << it.second<<" demand : " << customerToDemandMap[it.second] << std::endl;
+	}
+	std::cout << "\nIntermediate satellite to available capacity map : " << std::endl;
+	for (auto it : satellites) {
+		std::cout << "satellilte : " << it << " available capacity : " << satelliteToAvailableCapacityMap[it] << std::endl;
+	}
+	std::wcout << "\nIntermediate satellite to demand map : " << std::endl;
+	for (auto it: satellites) {
+		std::cout << "satellite : " << it << " satisfied demand : " << satelliteToDemandMap[it] << std::endl;
+	}
+	//update depot assignment with satellites
+	int totalDemand = 0;
+	for (auto it: satellites) {
+		if (it != 0) {
+			totalDemand += satelliteToDemandMap[it];
+			satelliteToCustomerMap.insert(std::make_pair(0, it));
+			customerToDemandMap.insert(std::pair<int, int>(it, satelliteToDemandMap[it]));
+		}
+	}
+	totalDemand += satelliteToDemandMap[0];
+	satelliteToDemandMap.erase(0);
+	satelliteToDemandMap.insert(std::pair<int, int>(0, totalDemand));
+	//show final satellite to demand distribution
+	std::wcout << "\nFinal satellite to demand map : " << std::endl;
+	for (auto it : satellites) {
+		std::cout << "satellite : " << it << " satisfied demand : " << satelliteToDemandMap[it] << std::endl;
+	}
+	//show final satellite to customer distribution
+	std::cout << "\nFinal satellite to customer map : " << std::endl;
+	for (auto& it : satelliteToCustomerMap) {
+		std::cout << "satellite : " << it.first << " customer : " << it.second << " demand : " << customerToDemandMap[it.second] << std::endl;
+	}
 }
 
 //generates cvrp solution
@@ -675,8 +760,10 @@ void Initialsolution::generateCVRPSolutions() {
 	int capLimitSecond = problemParameters.getSecondEchelonVehicleCapacityLimit();
 	std::map<int, int> cusToDemand = problemParameters.getCustomerToDemandMap();
 	//update cusToDemand map
-	for (auto it : satelliteToDemandMap) {
-		cusToDemand.insert(it);
+	for (auto & it : satelliteToDemandMap) {
+		if (it.first != 0) {
+			cusToDemand.insert(it);
+		}
 	}
 	//check feasibility
 	if (isProblemFeasible == false) {
@@ -686,14 +773,19 @@ void Initialsolution::generateCVRPSolutions() {
 	else {
 		//solve cvrp problem
 		twoEchelonSolution.clearSecondEchelonSolutionList();
-		for (auto & iter : satelliteToCustomerMap) {
-			int satID = iter.first;
+		for (auto iter : problemParameters.getSatelliteNodes()) {
+			int satID = iter;
 			std::vector<int> customerSet;
-			for (auto it = satelliteToCustomerMap.lower_bound(iter.first); it != satelliteToCustomerMap.upper_bound(iter.first); ++it) {
+			for (auto it = satelliteToCustomerMap.lower_bound(iter); it != satelliteToCustomerMap.upper_bound(iter); ++it) {
 				customerSet.push_back((*it).second);
 			}
 			int capLimit = 0;
 			satID == 0 ? capLimit = capLimitFirst : capLimit = capLimitSecond;
+			std::cout << "\nsatellite : " << satID << " capacity limit for a route : " << capLimit << std::endl;
+			std::cout << "\nThe customers assigned to this satellite are : " << std::endl;
+			for (auto it: customerSet) {
+				std::cout << "customer : " << it <<" demand : "<<cusToDemand[it]<< std::endl;
+			}
 			Geneticalgorithm ga(satID, capLimit, cusToDemand, distance, customerSet);
 			ga.runGeneticAlgorithm();
 			chrom = ga.getGASolution();

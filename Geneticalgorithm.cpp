@@ -70,6 +70,9 @@ void Chromosome::showChromosome() {
 	std::cout << "The max route capacity is : " << maxRouteCapacity << ";" << std::endl;
 }
 
+/*
+*/
+
 //updates to feasible chromosome
 void Chromosome::updateToFeasibleChromosome(std::map<int, int> demand, std::vector<std::vector<double>> distance) {
 	if (isFeasible) {
@@ -79,70 +82,49 @@ void Chromosome::updateToFeasibleChromosome(std::map<int, int> demand, std::vect
 		std::cout << "\nThe chromosome is not feasible! Feasibility restoration is in progress!!!" << std::endl;
 		std::vector<int> infSol = chromosome;
 		std::vector<int> tempStorage;
-chromosome.clear();
-int capacity = 0;
-int numSepInt = 0;
-for (auto it = infSol.begin(); it != infSol.end(); ++it) {
-	if (*it != sepInt) {
-		capacity += demand[*it];
-		if (capacity <= maxRouteCapacity) {
-			tempStorage.push_back(*it);
-		}
-		else {
-			for (auto iter : tempStorage) {
-				chromosome.push_back(iter);
+		chromosome.clear();
+		//std::cout << "route capacity : " << maxRouteCapacity << " sep int : " << sepInt << " chromosome size : " << chromosome.size() << std::endl;
+		int capacity = 0;
+		for (int i = 0; i < infSol.size(); ++i) {
+			if (infSol.at(i) != sepInt) {
+				tempStorage.push_back(infSol.at(i));
 			}
-			if (numSepInt >= 1) {
-				for (int i = 0; i < numSepInt; ++i) {
-					chromosome.push_back(sepInt);
-				}
-				numSepInt = 0;
+		}
+		for (auto it : tempStorage) {
+			capacity += demand[it];
+			if (capacity <= maxRouteCapacity) {
+				//std::cout << "capacity " << capacity << " customer " << it << std::endl;
+				chromosome.push_back(it);
 			}
 			else {
 				chromosome.push_back(sepInt);
-				numSepInt -= 1;
+				//chromosome.push_back(sepInt);
+				chromosome.push_back(it);
+				capacity = demand[it];
 			}
-			tempStorage.clear();
-			capacity = demand[*it];
-			tempStorage.push_back(*it);
 		}
-	}
-	else {
-		numSepInt += 1;
-	}
-}
-if (!tempStorage.empty()) {
-	for (auto it : tempStorage) {
-		chromosome.push_back(it);
-	}
-}
-if (numSepInt >= 1) {
-	for (int i = 0; i < numSepInt; ++i)
-		chromosome.push_back(sepInt);
-}
-else {
-	chromosome.push_back(sepInt);
-}
-// update fitness
-double cost = 0.0;
-int preval = sepInt;
-int val = 0;
-for (auto it = chromosome.begin(); it != chromosome.end(); ++it) {
-	if (*it != sepInt) {
-		val = *it;
-	}
-	else {
-		val = sepInt;
-	}
-	cost += distance[preval][val];
-	preval = val;
-}
-cost += distance[preval][sepInt];
-fitness = cost;
-//update feasibility
-isFeasible = true;
+		chromosome.push_back(sepInt);		
+		// update fitness
+		double cost = 0.0;
+		int preval = sepInt;
+		int val = 0;
+		for (auto it = chromosome.begin(); it != chromosome.end(); ++it) {
+			if (*it != sepInt) {
+				val = *it;
+			}
+			else {
+				val = sepInt;
+			}
+			cost += distance[preval][val];
+			preval = val;
+		}
+		cost += distance[preval][sepInt];
+		fitness = cost;
+		//update feasibility
+		isFeasible = true;
 	}
 }
+
 
 //default constructor
 CrossOver::CrossOver() {
@@ -153,7 +135,7 @@ CrossOver::CrossOver() {
 CrossOver::CrossOver(const CrossOver& crossr) {
 	std::cout << "\nThe copy constructor of crossover class is called!" << std::endl;
 	parent1 = crossr.parent1;
-	parent1 = crossr.parent2;
+	parent2 = crossr.parent2;
 	offspring = crossr.offspring;
 }
 
@@ -189,17 +171,7 @@ void CrossOver::performPertiallyMappedCrossover(std::map<int, int> demand, std::
 			par1.push_back(sepInt1);
 		}
 	}
-	//needs better fix later
-	/*
-	for (int i = 0; i < par1.size(); ++i) {
-		if (par1[i] == 0) {
-			par1[i] = sepInt1;
-		}
-		if (par2[i] == 0) {
-			par2[i] = sepInt2;
-		}
-	}
-	*/
+	
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> distr(int(par1.size()/2), (par1.size()-1));
@@ -362,7 +334,18 @@ void Mutation::performChainMutation(std::map<int, int> demand, std::vector<std::
 	int size = getOriginalChromosome().getSize();
 	int sepInt = getOriginalChromosome().getSepInt();
 	int capacityLimit = getOriginalChromosome().getMaxRouteCapacity();
-	int val = ceil(sqrt(size));
+	//find no of genes
+	std::set<int> GeneDiversity;
+	int val = 0;
+	for (auto it: chromToMutat) {
+		GeneDiversity.insert(it);
+	}
+	if (GeneDiversity.size() < 20) {
+		val = 2;
+	}
+	else {
+		val = ceil(sqrt(GeneDiversity.size()));
+	}
 	//no. of genes
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -450,6 +433,7 @@ bool Comparator::operator()(Chromosome &a, Chromosome &b){
 //default constructor
 Population::Population() {
 	std::cout << "The default constructor of the population class is called!" << std::endl;
+	diversitySize  = 0;
 	populationSize = 50;
 	numberOfNodes  = 0;
 	depotNode      = 0;
@@ -461,6 +445,7 @@ Population::Population() {
 //copy constructor
 Population::Population(const Population & gentn) {
 	std::cout << "The copy constructor of the population class is called!" << std::endl;
+	diversitySize  = gentn.diversitySize;
 	populationSize = gentn.populationSize;
 	numberOfNodes  = gentn.numberOfNodes;
 	depotNode      = gentn.depotNode;
@@ -492,28 +477,31 @@ Population::Population(int popSize, int numNodes, int depNode, int capLimit, int
 
 
 //return population
-std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> Population::getPopulation() {
+std::list<Chromosome> Population::getPopulation() {
 	return population;
 }
 
 //print population
 void Population::showPopulation() {
-	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> abc = population;
 	std::cout << "The chromosomes of the current population are : " << std::endl;
-	int i = 1;
-	while (!abc.empty())
-	{
-		std::cout << "\nThe chromosome no. is : " << i << std::endl;
-		Chromosome crm = abc.top();
-		crm.showChromosome();
-		abc.pop();
-		i++;
+	for (auto & it: population) {
+		it.showChromosome();
+		std::cout << std::endl;
 	}
 }
 
 //updates population with the offspring
 void Population::updatePopulationWithOffspring() {
-	population.push(offspring);
+	population.push_back(offspring);
+	std::list<Chromosome>::iterator iter;
+	double cost = 0;
+	for (auto it = population.begin(); it != population.end(); ++it) {
+		if ((*it).getFitness() > cost) {
+			cost = (*it).getFitness();
+			iter = it;
+		}
+	}
+	population.erase(iter);
 }
 
 //returns offspring after genetic operations 
@@ -523,12 +511,42 @@ Chromosome Population::getOffspring() {
 
 //removes clones with random Chromosome
 void Population::manageClones() {
-	//needs implementation
+	/*
+	std::set<double> costs;
+	for (auto & it: population) {
+		costs.insert(it.getFitness());
+	}
+	std::cout << "The size of identical chromosomes is : " << costs.size() << std::endl;
+	*/
+}
+
+//measures diversity size of a generation of chromosomes
+void Population::measureDiversitySize() {
+	std::set<double> costs;
+	for (auto & it : population) {
+		costs.insert(it.getFitness());
+	}
+	diversitySize = costs.size();
+	std::cout << "The diveristy size is : " << diversitySize << std::endl;
+}
+
+//returns the size of the diversity present in a generation
+int Population::getDiversitySize() {
+	measureDiversitySize();
+	return diversitySize;
 }
 
 //returns generation best chromosome
 Chromosome Population::getBestChromosome() {
-	populationBest = population.top();
+	double cost = 100000;
+	std::list<Chromosome>::iterator iter;
+	for (auto it = population.begin(); it != population.end(); ++it) {
+		if ((*it).getFitness()<cost) {
+			cost = (*it).getFitness();
+			iter = it;
+		}
+	}
+	populationBest = (*iter);
 	return populationBest;
 }
 
@@ -609,20 +627,36 @@ Chromosome Population::generateRandomChromosome() {
 void Population::populatePopulation() {
 	for (int i = 0; i < populationSize; ++i) {
 		Chromosome crm = generateRandomChromosome();
-		population.push(crm);
+		population.push_back(crm);
 	}
+	manageClones();
 }
 
 //perfoms crossover on the current population
 void Population::performCrossOver() {
-	Chromosome parent1 = population.top();
-	//std::cout << "Show parent 1 : " << std::endl;
+	std::list<Chromosome>::iterator iter1, iter2;
+	double cost1 = 100000;
+	double cost2 = 100000;
+	for (auto it = population.begin(); it != population.end(); ++it) {
+		if ((*it).getFitness() < cost1) {
+			cost1 = (*it).getFitness();
+			iter1 = it;
+		}
+	}
+	for (auto it = population.begin(); it != population.end(); ++it) {
+		if ((*it).getFitness() < cost2 && (*it).getFitness() > cost1) {
+			if (it != iter1) {
+				cost2 = (*it).getFitness();
+				iter2 = it;
+			}
+		}
+	}
+	Chromosome parent1 = *iter1;
+	std::cout << "Show parent 1 : " << std::endl;
 	//parent1.showChromosome();
-	population.pop();
-	Chromosome parent2 = population.top();
-	//std::cout << "Show parent 2 : " << std::endl;
+	Chromosome parent2 = *iter2;
+	std::cout << "Show parent 2 : " << std::endl;
 	//parent2.showChromosome();
-	population.push(parent1);
 	CrossOver cross(parent1, parent2);
 	cross.performPertiallyMappedCrossover(demand, distance);
 	crossOverChild = cross.getOffspring();
@@ -630,13 +664,12 @@ void Population::performCrossOver() {
 
 //performs mutation on the current population
 void Population::performMutation() {
-	Mutation mut(crossOverChild);
-	//std::cout << "Show the cross over child" << std::endl;
+	std::cout << "Show the cross over child" << std::endl;
 	//crossOverChild.showChromosome();
+	Mutation mut(crossOverChild);
 	mut.performChainMutation(demand, distance);
 	mutationChild = mut.getMutatedOffspring();
-	/*
-	//std::cout << "The mutated chromosome is : " << std::endl;
+	std::cout << "The mutated chromosome is : " << std::endl;
 	//mutationChild.showChromosome();
 	FeasibleSolution febSol = getFeasibleSolutionFromChromosome(mutationChild);
 	//std::cout << "The Feasible solution version of the mutated child is : " << std::endl;
@@ -649,10 +682,8 @@ void Population::performMutation() {
 	Chromosome chromChild = getChromosomeFromFeasibleSolution(febChild);
 	//std::cout << "The chromosome version of the tabu search solution is : " << std::endl;
 	//chromChild.showChromosome();
-	
 	offspring = chromChild;
-	*/
-	offspring = mutationChild;
+	//offspring = mutationChild;
 }
 //converst a chromosome to a feasible solution 
 FeasibleSolution Population::getFeasibleSolutionFromChromosome(Chromosome chrom) {
@@ -682,8 +713,6 @@ Chromosome Population::getChromosomeFromFeasibleSolution(FeasibleSolution febSol
 	Chromosome crm(chrom_sol, fitness, sepInt, feasible, capacityLimit);
 	return crm;
 }
-
-
 
 //default constructor
 Geneticalgorithm::Geneticalgorithm() {
@@ -790,29 +819,39 @@ void Geneticalgorithm::runGeneticAlgorithm() {
 	double prevCost = 100000;
 	double currentCost = 0;
 	int iter = 0;
+	int diversitySize = 0;
 	for (int i = 0; i < maxIterations; ++i) {
 		iter++;
-		ppl.performCrossOver();
-		ppl.performMutation();
-		Chromosome crm = ppl.getOffspring();
-		generationalOffsprings.push_back(crm);
-		ppl.updatePopulationWithOffspring();
-		Chromosome crom = ppl.getBestChromosome();
-		generationBestSolutions.push_back(crom);
-		if (crom.getFitness()<incumbentSolution.getFitness()) {
-			incumbentSolution = crom;
+		diversitySize = ppl.getDiversitySize();
+		if (diversitySize <= 5) {
+			numNonImprovingIterLimit = 5;
 		}
-		currentCost = incumbentSolution.getFitness();
-		if (currentCost < prevCost) {
-			prevCost = currentCost;
-			counter = 0;
+		if (diversitySize >= 2) {
+			ppl.performCrossOver();
+			ppl.performMutation();
+			Chromosome crm = ppl.getOffspring();
+			generationalOffsprings.push_back(crm);
+			ppl.updatePopulationWithOffspring();
+			Chromosome crom = ppl.getBestChromosome();
+			generationBestSolutions.push_back(crom);
+			if (crom.getFitness() < incumbentSolution.getFitness()) {
+				incumbentSolution = crom;
+			}
+			currentCost = incumbentSolution.getFitness();
+			if (currentCost < prevCost) {
+				prevCost = currentCost;
+				counter = 0;
+			}
+			else {
+				counter++;
+			}
+			if (counter >= numNonImprovingIterLimit) {
+				break;
+			}
 		}
 		else {
-			counter++;
-		}
-		if (counter == numNonImprovingIterLimit) {
 			break;
-		}
+		}		
 	}
 	auto stopga = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = stopga - startga;
@@ -823,6 +862,7 @@ void Geneticalgorithm::runGeneticAlgorithm() {
 	double secDuration = double(ms_double.count()) / 1000;
 	std::cout <<"\nTime duration : "<< secDuration << " seconds" << std::endl;
 	std::cout << "\nThe number of Genetic Algorithm iterations : " << iter << ";" << std::endl;
+	//ppl.clearPopulation();
 }
 
 //prints ga solution
@@ -835,4 +875,5 @@ void Geneticalgorithm::showGASolution() {
 void Geneticalgorithm::showCurrentGeneration() {
 	ppl.showPopulation();
 }
+
 
