@@ -5,6 +5,7 @@
 #include <queue>
 #include <iterator>
 #include <cmath>
+#include <set>
 
 #include "Tabusearch.h"
 
@@ -100,6 +101,7 @@ public:
 
 //population of chromosomes
 class Population {
+	int diversitySize;
 	int populationSize;
 	int numberOfNodes;
 	int depotNode;
@@ -108,7 +110,8 @@ class Population {
 	int sWapLength;
 	std::map<int, int> demand;
 	std::vector<std::vector<double>> distance;
-	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> population;
+	//std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> population;
+	std::list<Chromosome> population;
 	std::vector<int> customerCluster;
 	Chromosome offspring;
 	Chromosome populationBest;
@@ -118,7 +121,8 @@ public:
 	Population();
 	Population(const Population & poplatn);
 	Population(int populationSize,	int numberOfNodes,	int depotNode,	int capacityLimit,	int kChainLength,	int sWapLength, std::map<int, int> demand, std::vector<std::vector<double>> distance, std::vector<int> customerCluster);
-	std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> getPopulation();
+	//std::priority_queue<Chromosome, std::vector<Chromosome>, Comparator> getPopulation();
+	std::list<Chromosome> getPopulation();
 	Chromosome getOffspring();
 	Chromosome getCrossOverChild();
 	Chromosome getMutationChild();
@@ -130,6 +134,8 @@ public:
 	void manageClones();
 	void performCrossOver();
 	void performMutation();
+	void measureDiversitySize();
+	int getDiversitySize();
 	FeasibleSolution getFeasibleSolutionFromChromosome(Chromosome chrom);
 	Chromosome getChromosomeFromFeasibleSolution(FeasibleSolution febSol);
 };

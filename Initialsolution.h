@@ -162,6 +162,7 @@ public:
 	Initialsolution();
 	Initialsolution(const Initialsolution & initSol);
 	Initialsolution(Chromosome chrom, CVRPSolution cvrpSol, ProblemParameters problemParameters, TwoEchelonSolution twoEchelonSolution);
+	Initialsolution(ProblemParameters problemParameters);
 	Chromosome getChromosome();
 	CVRPSolution getCVRPSolution();
 	ProblemParameters getProblemParameters();

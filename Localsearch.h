@@ -55,22 +55,18 @@ private:
 	CVRPSolution firstEchelonSolution;
 	CVRPSolution currentSatelliteSolution;
 	CVRPSolution potentialSatelliteSolution;
-	bool isNodeAdditionFeasible;//needs justification?
+	bool currentSolutionImproved;
 public:
 	Localsearch();
 	Localsearch(const Localsearch & locsrch);
 	Localsearch(TwoEchelonSolution currentSolution, TwoEchelonSolution bestSolution);
 	TwoEchelonSolution getCurrentSolution();
 	TwoEchelonSolution getBestSolution();
+	bool isCurrentSolutionImproved();
 	void showCurrentSolution();
 	void showBestSolution();
+	void createCustomersPriorityQueue();
 	void runLocalSearch();
-	void customersReassignmentOrder();
-	void checkNodeAdditionFeasibility();
-	void addNodeToThePotentialSatellite();
-	void deleteNodeFromTheCurrentSatellite();
-	void updateFirstEchelonSolution();
-	void computeObjectiveValueOfTheNewSolution();
 };
 
 
