@@ -45,6 +45,7 @@ private:
 	TwoEchelonSolution localSolution;
 	TwoEchelonSolution bestSolution;
 	TwoEchelonSolution intermediateSolution;
+	TwoEchelonSolution currentBestSolution;
 	std::priority_queue<CustomerStatus, std::vector<CustomerStatus>, SortTool> customersToBeReassigned;
 public:
 	Pathrelinking();
@@ -58,6 +59,7 @@ public:
 	void showBestSolution();
 	void showIntermediateSolution();
 	void runPathRelinking();
+	void showCurrentBestSolution();
 };
 
 
