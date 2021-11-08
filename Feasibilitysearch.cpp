@@ -121,7 +121,7 @@ void Feasibilitysearch::runFeasibilitySearch() {
 			infeasibleSecondEchelonSols.push_back(it);
 		}
 		else {
-			std::cout << "CVRP solution is being inserted in the new two echelon solution!" << std::endl;
+			//std::cout << "CVRP solution is being inserted in the new two echelon solution!" << std::endl;
 			febSrchSol.insertSecondEchelonSolution(it);
 		}
 	}
@@ -176,16 +176,20 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				firstEchelonRoutesList.push_back(route);
 			}
 			//show the routes for the first echelon
+			/*
 			for (auto &it : firstEchelonRoutesList) {
 				std::cout << "show the route : " << std::endl;
 				it.showRoute();
 			}
+			*/
 		}
 		//show infeasible second echelon cvrp sols
+		/*
 		for (auto & iter: infeasibleSecondEchelonSols) {
 			std::cout << "show second echelon cvrp infeasible sol : " << std::endl;
 			iter.showSolution();
 		}
+		*/
 		//populate second echelon routes list
 		for (auto & iter : infeasibleSecondEchelonSols) {
 			std::list<Route> satelliteRouteList;
@@ -219,11 +223,13 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				Route route(routeSol, cost, capacity, sepInt);
 				satelliteRouteList.push_back(route);
 			}	
+			/*
 			std::cout << "show second echelon route : " << std::endl;
 			for (auto & it: satelliteRouteList) {
 				std::cout << "show route : " << std::endl;
 				it.showRoute();
 			}
+			*/
 			secondEchelonRoutesLists.push_back(satelliteRouteList);
 		}
 		//make infeasible satellite solutions feasible
@@ -266,10 +272,12 @@ void Feasibilitysearch::runFeasibilitySearch() {
 			for (auto it: customers) {
 				freeCustomersSet.insert(it);
 			}
+			/*
 			for (auto & it : iter) {
 				std::cout << "show the updated routes : " << std::endl;
 				it.showRoute();
 			}
+			*/
 		}
 		//make first echelon solution feasible
 		while (firstEchelonRoutesList.size() > problemParams.getMaxNumberOfVehicleInFirstEchelon()) {
@@ -301,11 +309,13 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				}
 			}
 		}
+		/*
 		std::cout << "show the updated first echelon routesList : " << std::endl;
 		for (auto & it: firstEchelonRoutesList) {
 			std::cout << "show updated route : " << std::endl;
 			it.showRoute();
 		}
+		*/
 		//delete the inserted customers
 		for (auto it : deleteableItem) {
 			freeCustomersSet.erase(it);
@@ -339,38 +349,40 @@ void Feasibilitysearch::runFeasibilitySearch() {
 			}
 			//update first echelon cvrp
 			std::vector<int> solution;
-			std::map<int, int> cusToDemand;
-			std::set<int> customer;
-			int capacity = 0;
+			std::map<int, int> cusToDemandMap;
+			std::set<int> firstEchelonCustomersSet;
+			int firstCapacity = 0;
 			double cost = 0;
 			int satID = 0;
 			for (auto& iter : firstEchelonRoutesList) {
 				satID = iter.getSepInt();
 				for (auto itr : iter.getRouteSol()) {
 					solution.push_back(itr);
-					customer.insert(itr);
+					firstEchelonCustomersSet.insert(itr);
 				}
 				solution.push_back(satID);
-				capacity += iter.getCapacityServed();
 				cost += iter.getRouteCost();
 			}
 			std::list<CVRPSolution> secondSolList = febSrchSol.getSecondEchelonSolutions();
 			std::set<int> satNodes = currentSolution.getSatelliteNodes();
-			for (auto cus : customer) {
+			for (auto cus : firstEchelonCustomersSet) {
 				auto itr = satNodes.find(cus);
 				if (itr != satNodes.end()) {
 					for (auto & sat : secondSolList) {
 						if (sat.getSatelliteNode() == cus) {
-							cusToDemand.insert(std::pair<int, int>(cus, sat.getTotalDemandSatisfied()));
+							cusToDemandMap.insert(std::pair<int, int>(cus, sat.getTotalDemandSatisfied()));
 							break;
 						}
 					}
 				}
 				else {
-					cusToDemand.insert(std::pair<int, int>(cus, currentSolution.getCustomerToDemandMap()[cus]));
+					cusToDemandMap.insert(std::pair<int, int>(cus, currentSolution.getCustomerToDemandMap()[cus]));
 				}
 			}
-			CVRPSolution firstCvrpSol(solution, customer, cusToDemand, cost, satID, problemParams.getFirstEchelonVehicleCapacityLimit(), capacity, firstEchelonRoutesList.size());
+			for (auto & it: cusToDemandMap) {
+				firstCapacity += it.second;
+			}
+			CVRPSolution firstCvrpSol(solution, firstEchelonCustomersSet, cusToDemandMap, cost, satID, problemParams.getFirstEchelonVehicleCapacityLimit(), firstCapacity, firstEchelonRoutesList.size());
 			febSrchSol.insertFirstEchelonSolution(firstCvrpSol);
 			//update new twoechelon feasible solution
 			std::map<int, int> satToDemandMap;
