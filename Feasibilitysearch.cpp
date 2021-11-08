@@ -120,6 +120,10 @@ void Feasibilitysearch::runFeasibilitySearch() {
 		if (it.getNumberOfRoutes() > problemParams.getMaxNumberOfVehicleInSecondEchelon()) {
 			infeasibleSecondEchelonSols.push_back(it);
 		}
+		else {
+			std::cout << "CVRP solution is being inserted in the new two echelon solution!" << std::endl;
+			febSrchSol.insertSecondEchelonSolution(it);
+		}
 	}
 	(!infeasibleSecondEchelonSols.empty() || firstEchelonSolFeasible == false) ? isFeasible = false : isFeasible = true;
 	//feasibility search
@@ -129,35 +133,41 @@ void Feasibilitysearch::runFeasibilitySearch() {
 		CVRPSolution secondEchelonCVRPSol;
 		std::list<Route> firstEchelonRoutesList;
 		std::list<std::list<Route>> secondEchelonRoutesLists;
+		std::cout << "List of routes for first echelon and second echelon cvrp solutions have been created." << std::endl;
 		//populate first echelon routes list
 		if (firstEchelonSolFeasible == false || firstEchelonSolFeasible == true) {
+			std::cout << "Show the cvrp solution for the first echelon : " << std::endl;
+			currentSolution.getFirstEchelonSolution().showSolution();
 			int sepInt = currentSolution.getFirstEchelonSolution().getSatelliteNode();
 			std::vector<int> firstEchelonSol = currentSolution.getFirstEchelonSolution().getSolution();
 			std::list<int> routeSol;
 			double cost = 0;
 			int capacity = 0;
 			int prev = sepInt;
+			std::set<int> satNodes = currentSolution.getSatelliteNodes();
 			for (auto it : firstEchelonSol) {
-				if (it != sepInt && routeSol.size() == 0) {
-					cost = currentSolution.getDistanceMatrix()[sepInt][it];
-					capacity = currentSolution.getCustomerToDemandMap()[it];
+				if (it != sepInt) {
+					cost += currentSolution.getDistanceMatrix()[prev][it];
+					auto itrr = satNodes.find(it);
+					if (itrr != satNodes.end()) {
+						capacity += currentSolution.getSatelliteToDemandMap()[it];
+					}
+					else {
+						capacity += currentSolution.getCustomerToDemandMap()[it];
+					}
 					routeSol.push_back(it);
 					prev = it;
 				}
-				if (it != sepInt && routeSol.size() > 0) {
-					cost += currentSolution.getDistanceMatrix()[prev][it];
-					capacity += currentSolution.getCustomerToDemandMap()[it];
-					routeSol.push_back(it);
-					prev = it;
-				}
-				if (it == sepInt && routeSol.size() > 0) {
-					cost += currentSolution.getDistanceMatrix()[prev][it];
-					Route route(routeSol, cost, capacity, sepInt);
-					firstEchelonRoutesList.push_back(route);
-					capacity = 0;
-					cost = 0;
-					routeSol.clear();
-					prev = sepInt;
+				if (it == sepInt) {
+					if (routeSol.size() != 0) {
+						cost += currentSolution.getDistanceMatrix()[prev][it];
+						Route route(routeSol, cost, capacity, sepInt);
+						firstEchelonRoutesList.push_back(route);
+						capacity = 0;
+						cost = 0;
+						routeSol.clear();
+						prev = sepInt;
+					}	
 				}
 			}
 			if (routeSol.size() > 0) {
@@ -165,6 +175,16 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				Route route(routeSol, cost, capacity, sepInt);
 				firstEchelonRoutesList.push_back(route);
 			}
+			//show the routes for the first echelon
+			for (auto &it : firstEchelonRoutesList) {
+				std::cout << "show the route : " << std::endl;
+				it.showRoute();
+			}
+		}
+		//show infeasible second echelon cvrp sols
+		for (auto & iter: infeasibleSecondEchelonSols) {
+			std::cout << "show second echelon cvrp infeasible sol : " << std::endl;
+			iter.showSolution();
 		}
 		//populate second echelon routes list
 		for (auto & iter : infeasibleSecondEchelonSols) {
@@ -176,26 +196,22 @@ void Feasibilitysearch::runFeasibilitySearch() {
 			int capacity = 0;
 			int prev = sepInt;
 			for (auto it : solution) {
-				if (it != sepInt && routeSol.size() == 0) {
-					cost = currentSolution.getDistanceMatrix()[sepInt][it];
-					capacity = currentSolution.getCustomerToDemandMap()[it];
-					routeSol.push_back(it);
-					prev = it;
-				}
-				if (it != sepInt && routeSol.size() > 0) {
+				if (it != sepInt) {
 					cost += currentSolution.getDistanceMatrix()[prev][it];
 					capacity += currentSolution.getCustomerToDemandMap()[it];
 					routeSol.push_back(it);
 					prev = it;
 				}
-				if (it == sepInt && routeSol.size() > 0) {
-					cost += currentSolution.getDistanceMatrix()[prev][it];
-					Route route(routeSol, cost, capacity, sepInt);
-					satelliteRouteList.push_back(route);
-					capacity = 0;
-					cost = 0;
-					routeSol.clear();
-					prev = sepInt;
+				if (it == sepInt) {
+					if (routeSol.size() != 0) {
+						cost += currentSolution.getDistanceMatrix()[prev][it];
+						Route route(routeSol, cost, capacity, sepInt);
+						satelliteRouteList.push_back(route);
+						capacity = 0;
+						cost = 0;
+						routeSol.clear();
+						prev = sepInt;
+					}
 				}
 			}
 			if (routeSol.size() > 0) {
@@ -203,6 +219,11 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				Route route(routeSol, cost, capacity, sepInt);
 				satelliteRouteList.push_back(route);
 			}	
+			std::cout << "show second echelon route : " << std::endl;
+			for (auto & it: satelliteRouteList) {
+				std::cout << "show route : " << std::endl;
+				it.showRoute();
+			}
 			secondEchelonRoutesLists.push_back(satelliteRouteList);
 		}
 		//make infeasible satellite solutions feasible
@@ -245,6 +266,10 @@ void Feasibilitysearch::runFeasibilitySearch() {
 			for (auto it: customers) {
 				freeCustomersSet.insert(it);
 			}
+			for (auto & it : iter) {
+				std::cout << "show the updated routes : " << std::endl;
+				it.showRoute();
+			}
 		}
 		//make first echelon solution feasible
 		while (firstEchelonRoutesList.size() > problemParams.getMaxNumberOfVehicleInFirstEchelon()) {
@@ -276,16 +301,90 @@ void Feasibilitysearch::runFeasibilitySearch() {
 				}
 			}
 		}
+		std::cout << "show the updated first echelon routesList : " << std::endl;
+		for (auto & it: firstEchelonRoutesList) {
+			std::cout << "show updated route : " << std::endl;
+			it.showRoute();
+		}
 		//delete the inserted customers
 		for (auto it : deleteableItem) {
 			freeCustomersSet.erase(it);
 		}
 		//update final feasibility status
 		freeCustomersSet.size() == 0 ? isFeasible = true : isFeasible = false;
+		std::cout << "\nThe feasibility status is : " << isFeasible << std::endl;
 		//update second echelon cvrp sols and first echelon cvrp sol
+		if (isFeasible == true) {
+			//update second echelon cvrps
+			for (auto& it : secondEchelonRoutesLists) {
+				std::vector<int> solution;
+				std::map<int, int> cusToDemand;
+				std::set<int> customer;
+				int capacity = 0;
+				double cost = 0;
+				int satID = 0;
+				for (auto& iter : it) {
+					satID = iter.getSepInt();
+					for (auto itr : iter.getRouteSol()) {
+						solution.push_back(itr);
+						cusToDemand.insert(std::pair<int, int>(itr, currentSolution.getCustomerToDemandMap()[itr]));
+						customer.insert(itr);
+					}
+					solution.push_back(satID);
+					capacity += iter.getCapacityServed();
+					cost += iter.getRouteCost();
+				}
+				CVRPSolution cvrpSol(solution, customer, cusToDemand, cost, satID, problemParams.getSecondEchelonVehicleCapacityLimit(), capacity, it.size());
+				febSrchSol.insertSecondEchelonSolution(cvrpSol);
+			}
+			//update first echelon cvrp
+			std::vector<int> solution;
+			std::map<int, int> cusToDemand;
+			std::set<int> customer;
+			int capacity = 0;
+			double cost = 0;
+			int satID = 0;
+			for (auto& iter : firstEchelonRoutesList) {
+				satID = iter.getSepInt();
+				for (auto itr : iter.getRouteSol()) {
+					solution.push_back(itr);
+					customer.insert(itr);
+				}
+				solution.push_back(satID);
+				capacity += iter.getCapacityServed();
+				cost += iter.getRouteCost();
+			}
+			std::list<CVRPSolution> secondSolList = febSrchSol.getSecondEchelonSolutions();
+			std::set<int> satNodes = currentSolution.getSatelliteNodes();
+			for (auto cus : customer) {
+				auto itr = satNodes.find(cus);
+				if (itr != satNodes.end()) {
+					for (auto & sat : secondSolList) {
+						if (sat.getSatelliteNode() == cus) {
+							cusToDemand.insert(std::pair<int, int>(cus, sat.getTotalDemandSatisfied()));
+							break;
+						}
+					}
+				}
+				else {
+					cusToDemand.insert(std::pair<int, int>(cus, currentSolution.getCustomerToDemandMap()[cus]));
+				}
+			}
+			CVRPSolution firstCvrpSol(solution, customer, cusToDemand, cost, satID, problemParams.getFirstEchelonVehicleCapacityLimit(), capacity, firstEchelonRoutesList.size());
+			febSrchSol.insertFirstEchelonSolution(firstCvrpSol);
+			//update new twoechelon feasible solution
+			std::map<int, int> satToDemandMap;
+			satToDemandMap.insert(std::pair<int, int>(firstCvrpSol.getSatelliteNode(), firstCvrpSol.getTotalDemandSatisfied()));
+			for (auto & it : secondSolList) {
+				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), it.getTotalDemandSatisfied()));
+			}
+			febSrchSol.populateTwoEchelonSolution(currentSolution.getCustomerToDemandMap(), satToDemandMap, currentSolution.getDistanceMatrix(), currentSolution.getCustomerNodes(), currentSolution.getSatelliteNodes());			
+			feasibilitySearchSolution = febSrchSol;
+		}
 	}
 	else {
 		feasibilitySearchSolution = currentSolution;
+		std::cout << "The initial solution is feasible. No need for feasibility search!" << std::endl;
 	}
 }
 
