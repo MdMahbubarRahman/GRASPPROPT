@@ -9,14 +9,19 @@
 class CustomerToSatelliteAssignmentProbabilities {
 private:
 	int customerID;
+	int firstChoiceSatID;
+	double highestProb;
 	std::map<int, double> satIDToProbabilityMap;
 public:
 	CustomerToSatelliteAssignmentProbabilities();
 	CustomerToSatelliteAssignmentProbabilities(int customerID, std::map<int, double> satIDToProbabilityMap);
 	CustomerToSatelliteAssignmentProbabilities(const CustomerToSatelliteAssignmentProbabilities & cusToSatAssgnProb);
 	int getCustomerID();
+	int getFirstChoiceSatID();
+	double getHighestProb();
 	std::map<int, double> getSatIDToProbabilityMap();
 	void updateCustomerToSatelliteProbabilityDistribution(int satID, double probability);
+	void showCusToSatAssngProbs();
 };
 
 //class
@@ -29,25 +34,40 @@ public:
 	AdaptiveCustomersAssignmentProbabilityDistribution(const AdaptiveCustomersAssignmentProbabilityDistribution & adaptiveCusToSatProbDist);
 	std::map<int, CustomerToSatelliteAssignmentProbabilities> getCustomerToSatAssignmentMap();
 	void updateAdaptiveCustomersAssignmentProbabilityDistribution(CustomerToSatelliteAssignmentProbabilities cusToSatAssgnProb);
+	void populateAdaptiveCusAssgnProbDist(ProblemParameters probParams);
+};
+ 
+//class 
+class compareHighestProbs {
+public:
+	bool operator()(CustomerToSatelliteAssignmentProbabilities & a, CustomerToSatelliteAssignmentProbabilities & b);
 };
 
 //class
 class Grasp{
 private:
-	AdaptiveCustomersAssignmentProbabilityDistribution cusAssignmentDistribution;
-	std::map<int, std::set<int>> satelliteToCustomersMap;
-	TwoEchelonSolution graspSolution;
+	Chromosome chrom;
+	CVRPSolution cvrpSol;
 	ProblemParameters probParams;
+	TwoEchelonSolution graspSolution;
+	std::map<int, int> satelliteToDemandMap;
+	std::multimap<int, int> satelliteToCustomersMap;
+	std::priority_queue<CustomerToSatelliteAssignmentProbabilities, std::vector<CustomerToSatelliteAssignmentProbabilities>, compareHighestProbs> cusAssignQueue;
+	AdaptiveCustomersAssignmentProbabilityDistribution cusAssignmentDistribution;	
 public:
 	Grasp();
 	Grasp(const Grasp & grasp);
 	Grasp(AdaptiveCustomersAssignmentProbabilityDistribution cusAssigmentDistribution, ProblemParameters probParams);
 	AdaptiveCustomersAssignmentProbabilityDistribution getCusAssigmentDistribution();
-	std::map<int, std::set<int>> getSatelliteToCustomersMap();
+	std::multimap<int, int> getSatelliteToCustomersMap();
 	TwoEchelonSolution getGraspSolution();
-	void assignCustomersToSatellites();
+	void makeCustomerToSatelliteAssignment();
+	void generateCVRPSolutions();
+	void generateTwoEchelonSolution();
 	void runGrasp();
 };
 
 #endif //GRASP_H
+
+
 
