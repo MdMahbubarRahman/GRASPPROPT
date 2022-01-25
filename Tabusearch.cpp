@@ -3,7 +3,7 @@
 
 //default constructor
 TabuList::TabuList() {
-	std::cout << "The default constructor of the tabu list has been called!" << std::endl;
+	//std::cout << "The default constructor of the tabu list has been called!" << std::endl;
 }
 
 //constructor
@@ -13,7 +13,7 @@ TabuList::TabuList(int routeNum, int customerID) {
 
 //copy constructor
 TabuList::TabuList(const TabuList & tbList) {
-	std::cout << "The copy constructor of the TabuList class has been called!" << std::endl;
+	//std::cout << "The copy constructor of the TabuList class has been called!" << std::endl;
 	tabuList = tbList.tabuList;
 }
 
@@ -23,7 +23,7 @@ void TabuList::showTabuList() const {
 		std::cout << "The tabu list is empty!" << std::endl;
 	}
 	else {
-		std::cout << "Contents of the tabu list are :" << std::endl;
+		//std::cout << "Contents of the tabu list are :" << std::endl;
 		for (const auto& elm : tabuList) {
 			std::cout << elm.first << "  " << elm.second << std::endl;
 		}
@@ -60,13 +60,13 @@ bool TabuList::checkInTabuList(int routeNum, int customerID) {
 
 //default constructor
 AspirationCriteria::AspirationCriteria() {
-	std::cout << "The default constructor of the Aspiration Criteria class has been called!" << std::endl;
-	currentBestCost = 100000.0;//Big number
+	//std::cout << "The default constructor of the Aspiration Criteria class has been called!" << std::endl;
+	currentBestCost = INFINITY;//Big number
 }
 
 //copoy constructor
 AspirationCriteria::AspirationCriteria(const AspirationCriteria& aspCriteria) {
-	std::cout << "The copy constructor of the aspiration criteria class has been called!" << std::endl;
+	//std::cout << "The copy constructor of the aspiration criteria class has been called!" << std::endl;
 	currentBestCost = aspCriteria.currentBestCost;
 }
 
@@ -87,7 +87,7 @@ double AspirationCriteria::getCurrentBestCost() {
 
 //default constructor
 FeasibleSolution::FeasibleSolution() {
-	std::cout << "The default constructor of the FeasibleSolution class has been called!" << std::endl;
+	//std::cout << "The default constructor of the FeasibleSolution class has been called!" << std::endl;
 }
 
 //constructor
@@ -162,14 +162,14 @@ Neighbourhood::Neighbourhood(const Neighbourhood& neighbour) {
 		neighbourSolution = neighbour.neighbourSolution;
 	}
 	else {
-		std::cout << "The neighbourhood solution is empty! The copy constructor fails." << std::endl;
+		//std::cout << "The neighbourhood solution is empty! The copy constructor fails." << std::endl;
 	}
 		
 	if (!neighbour.kNeighbourSolution.empty()) {
 		kNeighbourSolution = neighbour.kNeighbourSolution;
 	}
 	else {
-		std::cout << "The K neighbourhood solution is empty! The copy constructor fails." << std::endl;
+		//std::cout << "The K neighbourhood solution is empty! The copy constructor fails." << std::endl;
 	}
 }
 
@@ -187,7 +187,7 @@ void Neighbourhood::insertToKNeighbour() {
 		neighbourSolution.clear();
 	}
 	else {
-		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
+		//std::cout << "\nThe neighbour solution list is empty!" << std::endl;
 	}	
 }
 
@@ -203,7 +203,7 @@ void Neighbourhood::showNeighbours() {
 		}
 	}
 	else {
-		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
+		//std::cout << "\nThe neighbour solution list is empty!" << std::endl;
 	}	
 }
 
@@ -237,7 +237,7 @@ std::list<FeasibleSolution> Neighbourhood::getKNeighbourSolutions() {
 //returns the best solution from the neighbourhood
 //&deletes the best solution from the list
 FeasibleSolution Neighbourhood::getBestFromNeighbour() {
-	double cost = 100000.0;
+	double cost = 1000000000.0;
 	FeasibleSolution bestSol;
 	std::list<FeasibleSolution>::iterator iter;
 	if (!neighbourSolution.empty()) {
@@ -251,14 +251,14 @@ FeasibleSolution Neighbourhood::getBestFromNeighbour() {
 		neighbourSolution.erase(iter);
 	}
 	else {
-		std::cout << "\nThe neighbour solution list is empty!" << std::endl;
+		//std::cout << "\nThe neighbour solution list is empty!" << std::endl;
 	}	
 	return bestSol;
 }
 
 //returns the best solution from the K neighbourhood
 FeasibleSolution Neighbourhood::getBestFromKNeighbour() {
-	double cost = 10000000.0;
+	double cost = INFINITY;
 	FeasibleSolution iter;
 	if (!kNeighbourSolution.empty()) {
 		for (auto & it : kNeighbourSolution) {
@@ -385,14 +385,14 @@ void Tabusearch::selectRandomAddAndDropRoutes() {
 		}
 	}
 	else {
-		std::cout << "There is only one route in this solution! Hence add and drop heuristic is invalid." << std::endl;
+		//std::cout << "There is only one route in this solution! Hence add and drop heuristic is invalid." << std::endl;
 	}
 }
 
 //generate neighbour solution by Add and Drop heuristic
 FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>> newRoutes, double newCost, int sepInt, int addToRoute, int dropFromRoute, int dropNode) {
 	double currentAddRouteCost = 0.0;
-	double newAddRouteCost = 100000.0;
+	double newAddRouteCost = 10000000000.0;
 	double currentDropRouteCost = 0.0;
 	double newDropRouteCost = 0.0;
 	int iterator = 1;
@@ -627,10 +627,10 @@ FeasibleSolution Tabusearch::generateNeighbourByOneSwap(std::list<std::list<int>
 			if (cost < swapInfo.finalCost) {
 				if ((firstRouteCapacity - demandVector[firstRt.at(i)] + demandVector[secondRt.at(j)]) <= maxRouteCapacity && (secondRouteCapacity + demandVector[firstRt.at(i)] - demandVector[secondRt.at(j)]) <= maxRouteCapacity) {
 					swapInfo.updateSwapInfo(i, j, firstRt.at(i), secondRt.at(j), cost, firstCost, secondCost);
-					std::cout << "One swap is feasible" << std::endl;
+					//std::cout << "One swap is feasible" << std::endl;
 				}
 				else {
-					std::cout << "One swap is not feasible" << std::endl;
+					//std::cout << "One swap is not feasible" << std::endl;
 				}
 			}
 		}
@@ -684,7 +684,7 @@ void Tabusearch::generateKChainNeighbourSolutions() {
 	for (int i = 0; i < kChain; ++i) {
 		//generate route to customer map
 		generateRouteCustomerMap(iterationBestSolution);
-		std::cout << "\nThe k iteration number is : " << i << std::endl;
+		//std::cout << "\nThe k iteration number is : " << i << std::endl;
 		//randomly choose routes for Add and Drop heuristic
 		selectRandomAddAndDropRoutes();
 		if (dropFromRoute == addToRoute) {
@@ -710,7 +710,7 @@ void Tabusearch::generateKChainNeighbourSolutions() {
 				//neighbour.showSolution();
 			}
 			else {
-				std::cout << "The capacity constraint is violated!" << std::endl;
+				//std::cout << "The capacity constraint is violated!" << std::endl;
 				continue;
 			}
 		}
@@ -752,7 +752,7 @@ void Tabusearch::generateOneSwapSolutions(){
 	for (int i = 0; i < swapChain; ++i) {
 		//generate route to customer map
 		generateRouteCustomerMap(iterationBestSolution);
-		std::cout << "\nThe swap iteration number is : " << i << std::endl;
+		//std::cout << "\nThe swap iteration number is : " << i << std::endl;
 		//randomly choose routes for Add and Drop heuristic
 		selectRandomAddAndDropRoutes();
 		if (dropFromRoute == addToRoute) {
@@ -788,13 +788,13 @@ void Tabusearch::generateOneSwapSolutions(){
 
 //runs tabu search algoirthm
 void Tabusearch::runTabuSearch() {
-	int MaxIter = 20;
-	int nonImprovingIterationLimit = 6;
+	int MaxIter = 10;
+	int nonImprovingIterationLimit = 5;
 	auto start = high_resolution_clock::now();
 	using std::chrono::duration;
 	//run the tabu search algoirhtm
 	int counter = 0;
-	double prevCost = 100000;
+	double prevCost = INFINITY;
 	double currentCost = 0;
 	int iter = 0;
 	for (int i = 0; i < MaxIter; ++i) {
@@ -813,19 +813,215 @@ void Tabusearch::runTabuSearch() {
 			break;
 		}
 	}
+    performTspHeuristics();
 	auto stop = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = stop - start;
-	showTabuSolution();
+	//showTabuSolution();
 	double secDuration = double(ms_double.count()) / 1000;
-	std::cout << secDuration << " seconds" << std::endl;
-	std::cout << "Show initial solution" << std::endl;
-	initialSolution.showSolution();
-	std::cout << "\nThe number of iterations : " << iter << ";" << std::endl;	
+	//std::cout << secDuration << " seconds" << std::endl;
+	//std::cout << "Show initial solution" << std::endl;
+	//initialSolution.showSolution();
+	//std::cout << "\nThe number of iterations : " << iter << ";" << std::endl;	
 }
 
 //performs TSP heuristics on incumbent solution
 void Tabusearch::performTspHeuristics() {
+	//incumbent solution
+	std::list<int> incSol = incumbentSolution.getSolution();
+	double incCost = incumbentSolution.getCost();
+	int sepIntVal = incumbentSolution.getSeparatorIntVal();
+	int sourRt = incumbentSolution.getSourceRoute();
+	int addedNod = incumbentSolution.getAddedNode();
+	std::vector<std::vector<double>> costMatrix = distanceMatrix;
+	//populate routes from the incumbent solution
+	std::list<std::vector<int>> incumbentRoutes;
+	std::list<double> incumbentCosts;
+	std::vector<int> route;
+	bool flag1 = false;
+	route.push_back(sepIntVal);
+	for (auto val : incSol) {
+		if (val != sepIntVal) {
+			route.push_back(val);
+			flag1 = true;
+		}
+		else if (flag1 == true && val == sepIntVal) {
+			route.push_back(val);
+			incumbentRoutes.push_back(route);
+			route.clear();
+			route.push_back(sepIntVal);
+			flag1 = false;
+		}
+	}
+	if (route.size() > 1) {
+		route.push_back(sepIntVal);
+		incumbentRoutes.push_back(route);
+		route.clear();
+	}
+	//optimize the routes
+	//two-opt heuristic algorithm for tsp route
+	for (auto& route : incumbentRoutes) {
+		//run tsp heuristic
+		int siz = route.size();
+		int MaxIter = 0;
+		if (siz <= 4) {
+			MaxIter = 1;
+		}
+		else if (siz >= 5 && siz <= 6) {
+			MaxIter = 3;
+		}
+		else if (siz >= 7 && siz <= 10) {
+			MaxIter = 6;
+		}
+		else {
+			MaxIter = 10;
+		}
+		//start
+		for (int iter = 1; iter <= MaxIter; iter++) {
+			double costA = 0;
+			double costB = 0;
+			double costC = 0;
+			double costD = 0;
+			double costDiff = 0;
+			int c1 = 0;
+			int c2 = 0;
+			int c3 = 0;
+			int c4 = 0;
+			for (int i = 0; i < route.size() - 1; i++) {
+				if (i == 0) {
+					for (int j = i + 2; j < route.size() - 2; j++) {
+						costA = costMatrix[route.at(i)][route.at(i + 1)];
+						costB = costMatrix[route.at(j)][route.at(j + 1)];
+						costC = costMatrix[route.at(i)][route.at(j)];
+						costD = costMatrix[route.at(i + 1)][route.at(j + 1)];
+						if (costDiff < (costA + costB - costC - costD)) {
+							costDiff = (costA + costB - costC - costD);
+							c1 = i;
+							c2 = i + 1;
+							c3 = j;
+							c4 = j + 1;
+						}
+					}
+				}
+				else {
+					for (int k = 0; k < i - 1; k++) {
+						costA = costMatrix[route.at(i)][route.at(i + 1)];
+						costB = costMatrix[route.at(k)][route.at(k + 1)];
+						costC = costMatrix[route.at(k)][route.at(i)];
+						costD = costMatrix[route.at(k + 1)][route.at(i + 1)];
+						if (costDiff < (costA + costB - costC - costD)) {
+							costDiff = (costA + costB - costC - costD);
+							c1 = i;
+							c2 = i + 1;
+							c3 = k;
+							c4 = k + 1;
+						}
+					}
+					for (int j = i + 2; j < route.size() - 1; j++) {
+						costA = costMatrix[route.at(i)][route.at(i + 1)];
+						costB = costMatrix[route.at(j)][route.at(j + 1)];
+						costC = costMatrix[route.at(i)][route.at(j)];
+						costD = costMatrix[route.at(i + 1)][route.at(j + 1)];
+						if (costDiff < (costA + costB - costC - costD)) {
+							costDiff = (costA + costB - costC - costD);
+							c1 = i;
+							c2 = i + 1;
+							c3 = j;
+							c4 = j + 1;
+						}
+					}
+				}
+			}
+			//std::cout << "\nThe improved route is the following." << std::endl;
+			int val1 = route.at(c2);
+			int val2 = route.at(c3);
+			route[c2] = val2;
+			route[c3] = val1;
+			//std::cout << "\nThe improved route is :" << std::endl;
+			//for (auto it : route) {
+			//	std::cout << it << " ";
+			//}
+			//std::cout << ";" << std::endl;
+			//need to fix route for the sepIntVal node
+			//need to keep track of the route cost to know whether route has changed or not
+			std::vector<int> newRoute;
+			std::vector<int> routeHead;
+			std::vector<int> routeTail;
+			bool flagT = false;
+			bool flagH = false;
+			for (auto val : route) {
+				if (val != sepIntVal && flagT == false) {
+					routeTail.push_back(val);
+				}
+				else if (val != sepIntVal && flagH == true) {
+					routeHead.push_back(val);
+				}
+				else if (val == sepIntVal && flagT == false && flagH == false) {
+					if (routeTail.size() != 0) {
+						routeTail.push_back(val);
+						flagT = true;
+					}
+					else {
+						routeHead.push_back(val);
+						flagH = true;
+					}
+				}
+				else if (val == sepIntVal && flagT == true && flagH == false) {
+					routeHead.push_back(val);
+					flagH = true;
+				}
+				else if (val == sepIntVal && flagT == false && flagH == true) {
+					routeTail.push_back(val);
+					flagT = true;
+				}
+			}
+			//populate new route
+			for (auto it : routeHead) {
+				newRoute.push_back(it);
+			}
+			for (auto it : routeTail) {
+				newRoute.push_back(it);
+			}
+			//std::cout << "\nNew route: " << std::endl;
+			//for (auto it: newRoute) {
+			//	std::cout << it << " ";
+			//}
+			for (int i = 0; i < route.size(); i++) {
+				route[i] = newRoute.at(i);
+			}
+		}
+	}
+	//calculate cost for each route
+	for (auto& it : incumbentRoutes) {
+		double cost = 0;
+		for (int i = 0; i < it.size() - 1; i++) {
+			cost += costMatrix[it.at(i)][it.at(i + 1)];
+		}
+		incumbentCosts.push_back(cost);
+		std::cout << "\nUpdated route cost : " << cost << std::endl;
+	}
+	//print the routes
+	//combining things together
+	double totalCost = 0;
+	for (auto it : incumbentCosts) {
+		totalCost += it;
+	}
+	std::list<int> updatedSol;
+	for (auto& sol : incumbentRoutes) {
+		for (auto it : sol) {
+			updatedSol.push_back(it);
+		}
+	}
 
+	std::cout << "\nUpdated solution : " << std::endl;
+	for (auto it : updatedSol) {
+		std::cout << it << " ";
+	}
+	std::cout << std::endl;
+	std::cout << "\nUpdated cost : " << totalCost << std::endl;
+
+	//update as tabu solution
+	FeasibleSolution febSol(updatedSol, totalCost, sepIntVal, sourRt, addedNod);
+	incumbentSolution = febSol;
 }
 
 //returns initial solution
