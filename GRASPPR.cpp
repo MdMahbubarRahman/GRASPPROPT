@@ -20,6 +20,8 @@ GRASPPR::GRASPPR(ProblemParameters pbParam) {
 
 //run grasp with path relinking algorithm
 void GRASPPR::runGraspPr() {
+	auto start = high_resolution_clock::now();
+	using std::chrono::duration;
 	//generate initial solution
 	std::cout << "\nInitial solution process has been started" << std::endl;
 	Initialsolution initSol(probParam);
@@ -68,15 +70,20 @@ void GRASPPR::runGraspPr() {
 		graspSols.push_back(intermediateSolution);
 	}
 	finalTwoEchelonSol = currentBestTwoEchelonSol;
+	auto stop = high_resolution_clock::now();
+	duration<double, std::milli> ms_double = stop - start;
+	//showTabuSolution();
+	double secDuration = double(ms_double.count()) / 1000;
+	std::cout<<"GRASPPR Duration: " << secDuration << " seconds" << std::endl;
 	std::cout << "\nThe initial solution for the Two Echelon VRP is : " << std::endl;
 	initialTwoEchelonSol.showTwoEchelonSolution();
-	std::cout << "\nShow grasp solutions" << std::endl;
-	int i = 0;
-	for (auto &it: graspSols) {
-		std::cout << "\nGRASP solution number : " << i << std::endl;
-		it.showTwoEchelonSolution();
-		i++;
-	}
+	//std::cout << "\nShow grasp solutions" << std::endl;
+	//int i = 0;
+	//for (auto &it: graspSols) {
+	//	std::cout << "\nGRASP solution number : " << i << std::endl;
+	//	it.showTwoEchelonSolution();
+	//	i++;
+	//}
 }
 
 //return the solution of the Algorithm
