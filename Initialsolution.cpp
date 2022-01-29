@@ -52,7 +52,7 @@ bool Distant::operator()(CustomerToSatelliteDistance & a, CustomerToSatelliteDis
 
 //default constructor
 ProblemParameters::ProblemParameters() {
-	std::cout << "The default constructor of the problem parameter class has been called!";
+	std::cout << "The default constructor of the problem parameter class has been called!" << std::endl;
 }
 
 //copy constructor
@@ -92,6 +92,7 @@ void ProblemParameters::showCustomerToDemandMap() {
 //prints distance matrix
 void ProblemParameters::showDistanceMatrix() {
 	int i = 0;
+	std::cout << "\nneeds implementation." << std::endl;
 	/*
 	for (auto & it: distanceMatrix) {
 		for (auto iter: it) {
@@ -569,7 +570,7 @@ void Initialsolution::mapCustomersToSatellites() {
 			std::cout << "First echelon priority found!" << std::endl;
 		}
 		else {
-			double cost = 1000000;
+			double cost = INFINITY;
 			double variableCost = 0;
 			int sat = 0;
 			for (auto iter : satellites) {
@@ -690,9 +691,9 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 	}
 	while (!freeCustomers.empty()){
 		auto cus = freeCustomers.begin();
-		double cost = 100000;
+		double cost = INFINITY;
 		double difCost = 0;
-		int sat = 100000;
+		int sat = INFINITY;
 		for (auto it: satellites) {
 			difCost = distance[*cus][it];
 			if (difCost < cost && (customerToDemandMap[*cus] <= satelliteToAvailableCapacityMap[it])) {
@@ -786,8 +787,10 @@ void Initialsolution::generateCVRPSolutions() {
 			for (auto it: customerSet) {
 				std::cout << "customer : " << it <<" demand : "<<cusToDemand[it]<< std::endl;
 			}
+			std::cout << "\nGenetic Algorithm started" << std::endl;
 			Geneticalgorithm ga(satID, capLimit, cusToDemand, distance, customerSet);
 			ga.runGeneticAlgorithm();
+			std::cout << "\nGenetic Algoirthm terminated" << std::endl;
 			chrom = ga.getGASolution();
 			std::set<int> customers;
 			for (auto it: customerSet) {
