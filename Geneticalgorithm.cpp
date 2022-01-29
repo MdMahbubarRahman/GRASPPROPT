@@ -59,7 +59,7 @@ int Chromosome::getMaxRouteCapacity() {
 
 //prints the chromosome
 void Chromosome::showChromosome() {
-	std::cout << "\nThe Chromosome representation is : " << std::endl;
+	//std::cout << "\nThe Chromosome representation is : " << std::endl;
 	for (auto it : chromosome) {
 		std::cout << it << " ";
 	}
@@ -76,10 +76,10 @@ void Chromosome::showChromosome() {
 //updates to feasible chromosome
 void Chromosome::updateToFeasibleChromosome(std::map<int, int> demand, std::vector<std::vector<double>> distance) {
 	if (isFeasible) {
-		std::cout << "\nThe chromosome representation is already feasible!" << std::endl;
+		//std::cout << "\nThe chromosome representation is already feasible!" << std::endl;
 	}
 	else {
-		std::cout << "\nThe chromosome is not feasible! Feasibility restoration is in progress!!!" << std::endl;
+		//std::cout << "\nThe chromosome is not feasible! Feasibility restoration is in progress!!!" << std::endl;
 		std::vector<int> infSol = chromosome;
 		std::vector<int> tempStorage;
 		chromosome.clear();
@@ -122,18 +122,19 @@ void Chromosome::updateToFeasibleChromosome(std::map<int, int> demand, std::vect
 		fitness = cost;
 		//update feasibility
 		isFeasible = true;
+		//std::cout << "\nFeasible chromosome has been found!" << std::endl;
 	}
 }
 
 
 //default constructor
 CrossOver::CrossOver() {
-	std::cout << "\nThe default constructor for cross over class is called!" << std::endl;
+	//std::cout << "\nThe default constructor for cross over class is called!" << std::endl;
 }
 
 //copy constructor
 CrossOver::CrossOver(const CrossOver& crossr) {
-	std::cout << "\nThe copy constructor of crossover class is called!" << std::endl;
+	//std::cout << "\nThe copy constructor of crossover class is called!" << std::endl;
 	parent1 = crossr.parent1;
 	parent2 = crossr.parent2;
 	offspring = crossr.offspring;
@@ -291,12 +292,12 @@ Chromosome CrossOver::getOffspring() {
 
 //default constructor
 Mutation::Mutation() {
-	std::cout << "The default mutation constructor is called!" << std::endl;
+	//std::cout << "The default mutation constructor is called!" << std::endl;
 }
 	
 //copy constructor
 Mutation::Mutation(const Mutation & mutatn){
-	std::cout << "The copy constructor of the mutation class is called!" << std::endl;
+	//std::cout << "The copy constructor of the mutation class is called!" << std::endl;
 	originalChrom = mutatn.originalChrom;
 	mutatedChrom = mutatn.mutatedChrom;
 }
@@ -432,7 +433,7 @@ bool Comparator::operator()(Chromosome &a, Chromosome &b){
 
 //default constructor
 Population::Population() {
-	std::cout << "The default constructor of the population class is called!" << std::endl;
+	//std::cout << "The default constructor of the population class is called!" << std::endl;
 	diversitySize  = 0;
 	populationSize = 50;
 	numberOfNodes  = 0;
@@ -444,7 +445,7 @@ Population::Population() {
 
 //copy constructor
 Population::Population(const Population & gentn) {
-	std::cout << "The copy constructor of the population class is called!" << std::endl;
+	//std::cout << "The copy constructor of the population class is called!" << std::endl;
 	diversitySize  = gentn.diversitySize;
 	populationSize = gentn.populationSize;
 	numberOfNodes  = gentn.numberOfNodes;
@@ -483,7 +484,7 @@ std::list<Chromosome> Population::getPopulation() {
 
 //print population
 void Population::showPopulation() {
-	std::cout << "The chromosomes of the current population are : " << std::endl;
+	//std::cout << "The chromosomes of the current population are : " << std::endl;
 	for (auto & it: population) {
 		it.showChromosome();
 		std::cout << std::endl;
@@ -538,7 +539,7 @@ int Population::getDiversitySize() {
 
 //returns generation best chromosome
 Chromosome Population::getBestChromosome() {
-	double cost = 100000;
+	double cost = INFINITY;
 	std::list<Chromosome>::iterator iter;
 	for (auto it = population.begin(); it != population.end(); ++it) {
 		if ((*it).getFitness()<cost) {
@@ -568,6 +569,7 @@ Chromosome Population::generateRandomChromosome() {
 	int totalDemand = 0;
 	for (int i = 0; i < customerCluster.size(); ++i) {
 		totalDemand += demand[customerCluster.at(i)];
+		//std::cout << "\nCustomer location in the cluster : " << i << " customer : " << customerCluster.at(i) << std::endl;
 	}
 	int numDepotNodes = ceil(double(totalDemand) / double(capacityLimit));
 	std::list<int> nodeBox;
@@ -575,8 +577,14 @@ Chromosome Population::generateRandomChromosome() {
 		nodeBox.push_back(customerCluster.at(i));
 	for (int j = 0; j < (4 * numDepotNodes - 1); ++j)
 		nodeBox.push_back(depotNode);
+	/*
+	std::cout << "\nShow the content of the node Box" << std::endl;
+	for (auto it: nodeBox) {
+		std::cout << " " << it << std::endl;
+	}
+	*/
 	std::vector<int> chrom_container;
-	while (!nodeBox.empty()) {
+	while(!nodeBox.empty()) {
 		auto it = nodeBox.begin();
 		std::uniform_int_distribution<> distr(0, (nodeBox.size() - 1));
 		int num = distr(gen);
@@ -584,7 +592,16 @@ Chromosome Population::generateRandomChromosome() {
 		chrom_container.push_back(*it);
 		nodeBox.erase(it);
 	}
+	//std::cout << "\nChromosome has been generated" << std::endl;
 	chrom_container.push_back(depotNode);
+	//std::cout << "The depot node is : " << depotNode << std::endl;
+	/*
+	std::cout << "Show the chromosome representation :" << std::endl;
+	for (auto &it: chrom_container) {
+		std::cout <<  it << " ";
+	}
+	std::cout << std::endl;
+	*/
 	//calculate fitness/cost
 	double cost = 0;
 	int preVal = depotNode;
@@ -597,10 +614,11 @@ Chromosome Population::generateRandomChromosome() {
 			val = depotNode;
 		}
 		cost = cost + distance[preVal][val];
-		//std::cout << preVal << " " << val << " " << distance[preVal][val] << " " << std::endl;
+		//std::cout << "source : " << preVal << " destination : " << val << " distance : " << distance[preVal][val] << " " << std::endl;
 		preVal = val;
 	}
 	cost = cost + distance[preVal][depotNode];
+	//std::cout << "\nCost of the chromosome representation has been updated" << std::endl;
 	//check feasibility
 	int capacity = 0;
 	bool feasible = true;
@@ -616,6 +634,7 @@ Chromosome Population::generateRandomChromosome() {
 			capacity = 0;
 		}
 	}
+	//std::cout << "\nFeasibility check for the chromosome representation has been done." << std::endl;
 	Chromosome crm(chrom_container, cost, depotNode, feasible, capacityLimit);
 	if (!crm.getFeasibilityStatus()) {
 		crm.updateToFeasibleChromosome(demand, distance);
@@ -625,18 +644,22 @@ Chromosome Population::generateRandomChromosome() {
 
 //populates first generation of population
 void Population::populatePopulation() {
+	std::cout << "\nPopulation size : " << populationSize << std::endl;
+	int j = 0;
 	for (int i = 0; i < populationSize; ++i) {
 		Chromosome crm = generateRandomChromosome();
 		population.push_back(crm);
+		j++;
 	}
+	std::cout << "\nNumber of chromosome generated : " << j << std::endl;
 	manageClones();
 }
 
 //perfoms crossover on the current population
 void Population::performCrossOver() {
 	std::list<Chromosome>::iterator iter1, iter2;
-	double cost1 = 100000;
-	double cost2 = 100000;
+	double cost1 = INFINITY;
+	double cost2 = INFINITY;
 	for (auto it = population.begin(); it != population.end(); ++it) {
 		if ((*it).getFitness() < cost1) {
 			cost1 = (*it).getFitness();
@@ -672,9 +695,10 @@ void Population::performMutation() {
 	std::cout << "The mutated chromosome is : " << std::endl;
 	//mutationChild.showChromosome();
 	FeasibleSolution febSol = getFeasibleSolutionFromChromosome(mutationChild);
-	//std::cout << "The Feasible solution version of the mutated child is : " << std::endl;
+	std::cout << "The Feasible solution version of the mutated child is : " << std::endl;
 	//febSol.showSolution();
 	Tabusearch tabu(febSol, demand, distance, kChainLength, sWapLength, capacityLimit);
+	std::cout << "\nRun tabu search" << std::endl;
 	tabu.runTabuSearch();
 	FeasibleSolution febChild = tabu.getIncumbentSolution();
 	//std::cout << "The tabu search solution : " << std::endl;
@@ -716,8 +740,8 @@ Chromosome Population::getChromosomeFromFeasibleSolution(FeasibleSolution febSol
 
 //default constructor
 Geneticalgorithm::Geneticalgorithm() {
-	std::cout << "The default constructor of the genetic algorithm has been called!" << std::endl;
-	maxIterations			= 200;
+	//std::cout << "The default constructor of the genetic algorithm has been called!" << std::endl;
+	maxIterations			= 100;
 	populationSize			= 0;
 	numberOfNodes			= 0;
 	depotNode				= 0;
@@ -728,7 +752,7 @@ Geneticalgorithm::Geneticalgorithm() {
 
 //copy constructor	
 Geneticalgorithm::Geneticalgorithm(const Geneticalgorithm & ga) {
-	std::cout << "The copy constructor of the genetic algorithm has been called!" << std::endl;
+	//std::cout << "The copy constructor of the genetic algorithm has been called!" << std::endl;
 	maxIterations			= ga.maxIterations;
 	populationSize			= ga.populationSize;
 	numberOfNodes			= ga.numberOfNodes;
@@ -749,7 +773,7 @@ Geneticalgorithm::Geneticalgorithm(const Geneticalgorithm & ga) {
 
 //construct ga with initial values
 Geneticalgorithm::Geneticalgorithm(int popSize, int numNodes, int depNode, int capLimit, int kChain, int sWap, std::map<int, int> dem, std::vector<std::vector<double>> dist, std::vector<int> cusCluster) {
-	maxIterations			= 200;
+	maxIterations			= 100;
 	populationSize			= popSize;
 	numberOfNodes		    = numNodes;
 	depotNode				= depNode;
@@ -763,7 +787,7 @@ Geneticalgorithm::Geneticalgorithm(int popSize, int numNodes, int depNode, int c
 
 //constructor
 Geneticalgorithm::Geneticalgorithm(int depNode, int capLimit, std::map<int, int> dem, std::vector<std::vector<double>> dist, std::vector<int> cusCluster) {
-	maxIterations = 200;
+	maxIterations = 100;
 	populationSize = 50;
 	numberOfNodes = cusCluster.size();
 	depotNode = depNode;
@@ -780,6 +804,7 @@ void Geneticalgorithm::populateInitialGeneration() {
 	Population population(populationSize, numberOfNodes, depotNode, capacityLimit, kChainLength, sWapLength, demand, distance, customerCluster);
 	ppl = population;
 	ppl.populatePopulation();
+	std::cout << "\nInitial generation has been populated" << std::endl;
 }
 
 //prints current generation best solution
@@ -808,15 +833,18 @@ void Geneticalgorithm::runGeneticAlgorithm() {
 	auto startga = high_resolution_clock::now();
 	using std::chrono::duration;
 	//run ga
+	std::cout << "\nInitial generation is being populated" << std::endl;
 	populateInitialGeneration();
 	initialSolution = ppl.getBestChromosome();
+	std::cout << "\nShow initial solution" << std::endl;
+	initialSolution.showChromosome();
 	incumbentSolution = ppl.getBestChromosome();
 	bestSolution = ppl.getBestChromosome();
-	std::cout << "The best solution in the first generation is : " << std::endl;
+	std::cout << "\nThe best solution in the first generation is : " << std::endl;
 	bestSolution.showChromosome();
 	int numNonImprovingIterLimit = 50;
 	int counter = 0;
-	double prevCost = 100000;
+	double prevCost = INFINITY;
 	double currentCost = 0;
 	int iter = 0;
 	int diversitySize = 0;
@@ -827,7 +855,9 @@ void Geneticalgorithm::runGeneticAlgorithm() {
 			numNonImprovingIterLimit = 5;
 		}
 		if (diversitySize >= 2) {
+			std::cout << "\nPerform crossover" << std::endl;
 			ppl.performCrossOver();
+			std::cout << "\nCrossover is done, perform mutation" << std::endl;
 			ppl.performMutation();
 			Chromosome crm = ppl.getOffspring();
 			generationalOffsprings.push_back(crm);
@@ -855,13 +885,13 @@ void Geneticalgorithm::runGeneticAlgorithm() {
 	}
 	auto stopga = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = stopga - startga;
-	std::cout << "\nThe initial solution is : " << std::endl;
-	initialSolution.showChromosome();
-	std::cout << "\nThe best solution is : " << std::endl;
-	incumbentSolution.showChromosome();
+	//std::cout << "\nThe initial solution is : " << std::endl;
+	//initialSolution.showChromosome();
+	//std::cout << "\nThe best solution is : " << std::endl;
+	//incumbentSolution.showChromosome();
 	double secDuration = double(ms_double.count()) / 1000;
-	std::cout <<"\nTime duration : "<< secDuration << " seconds" << std::endl;
-	std::cout << "\nThe number of Genetic Algorithm iterations : " << iter << ";" << std::endl;
+	//std::cout <<"\nTime duration : "<< secDuration << " seconds" << std::endl;
+	//std::cout << "\nThe number of Genetic Algorithm iterations : " << iter << ";" << std::endl;
 	//ppl.clearPopulation();
 }
 
@@ -875,5 +905,4 @@ void Geneticalgorithm::showGASolution() {
 void Geneticalgorithm::showCurrentGeneration() {
 	ppl.showPopulation();
 }
-
 
