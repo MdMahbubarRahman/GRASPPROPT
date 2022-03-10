@@ -52,13 +52,14 @@ bool Distant::operator()(CustomerToSatelliteDistance & a, CustomerToSatelliteDis
 
 //default constructor
 ProblemParameters::ProblemParameters() {
-	std::cout << "The default constructor of the problem parameter class has been called!";
+	std::cout << "The default constructor of the problem parameter class has been called!" << std::endl;
 }
 
 //copy constructor
 ProblemParameters::ProblemParameters(const ProblemParameters& probParam) {
 	customerToDemandMap = probParam.customerToDemandMap;
-	distanceMatrix = probParam.distanceMatrix;
+	roadDistanceMatrix = probParam.roadDistanceMatrix;
+	aerialDistanceMatrix = probParam.aerialDistanceMatrix;
 	customerNodes = probParam.customerNodes;
 	satelliteNodes = probParam.satelliteNodes;
 	customersMustServeByFirstEchelon = probParam.customersMustServeByFirstEchelon;
@@ -69,9 +70,10 @@ ProblemParameters::ProblemParameters(const ProblemParameters& probParam) {
 }
 
 //constructor
-ProblemParameters::ProblemParameters(std::map<int, int> cusToDemandMap, std::vector<std::vector<double>> distMatrix, std::set<int> cusNodes, std::set<int> satNodes, std::set<int> cusMustServeByFirstEchelon, int firstEchelonVehicleCapLimit, int secondEchelonVehicleCapLimit, int maxNumOfVehicleInFirstEchelon, int maxNumOfVehicleInSecondEchelon) {
+ProblemParameters::ProblemParameters(std::map<int, int> cusToDemandMap, std::vector<std::vector<double>> roadDistMatrix, std::vector<std::vector<double>> aerialDistMatrix, std::set<int> cusNodes, std::set<int> satNodes, std::set<int> cusMustServeByFirstEchelon, int firstEchelonVehicleCapLimit, int secondEchelonVehicleCapLimit, int maxNumOfVehicleInFirstEchelon, int maxNumOfVehicleInSecondEchelon) {
 	customerToDemandMap = cusToDemandMap;
-	distanceMatrix = distMatrix;
+	roadDistanceMatrix = roadDistMatrix;
+	aerialDistanceMatrix = aerialDistMatrix;
 	customerNodes = cusNodes;
 	satelliteNodes = satNodes;
 	customersMustServeByFirstEchelon = cusMustServeByFirstEchelon;
@@ -90,8 +92,23 @@ void ProblemParameters::showCustomerToDemandMap() {
 }
 
 //prints distance matrix
-void ProblemParameters::showDistanceMatrix() {
+void ProblemParameters::showRoadDistanceMatrix() {
 	int i = 0;
+	std::cout << "\nneeds implementation." << std::endl;
+	/*
+	for (auto & it: distanceMatrix) {
+		for (auto iter: it) {
+			std::cout<<"distance from node : "<<i
+		}
+		i++;
+	}
+	*/
+}
+
+//prints distance matrix
+void ProblemParameters::showAerialDistanceMatrix() {
+	int i = 0;
+	std::cout << "\nneeds implementation." << std::endl;
 	/*
 	for (auto & it: distanceMatrix) {
 		for (auto iter: it) {
@@ -152,8 +169,13 @@ std::map<int, int> ProblemParameters::getCustomerToDemandMap() {
 }
 
 //returns distance matrix
-std::vector<std::vector<double>> ProblemParameters::getDistanceMatrix() {
-	return distanceMatrix;
+std::vector<std::vector<double>> ProblemParameters::getRoadDistanceMatrix() {
+	return roadDistanceMatrix;
+}
+
+//returns distance matrix
+std::vector<std::vector<double>> ProblemParameters::getAerialDistanceMatrix() {
+	return aerialDistanceMatrix;
 }
 
 //returns customer nodes
@@ -371,22 +393,26 @@ TwoEchelonSolution::TwoEchelonSolution(const TwoEchelonSolution& locSol) {
 	numberOfActiveSatellites = locSol.numberOfActiveSatellites;
 	customerToDemandMap = locSol.customerToDemandMap;
 	satelliteToDemandMap = locSol.satelliteToDemandMap;
-	distanceMatrix = locSol.distanceMatrix;
+	roadDistanceMatrix = locSol.roadDistanceMatrix;
+	aerialDistanceMatrix = locSol.aerialDistanceMatrix;
 	customerNodes = locSol.customerNodes;
 	satelliteNodes = locSol.satelliteNodes;
+	customersDedicatedToDepot = locSol.customersDedicatedToDepot;
 	firstEchelonSolution = locSol.firstEchelonSolution;
 	secondEchelonSolutions = locSol.secondEchelonSolutions;
 }
 
 //constructor
-TwoEchelonSolution::TwoEchelonSolution(double solutionFitness, int numActiveSatellites, std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> disMatrix, std::set<int> cusNodes, std::set<int> satNodes, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols) {
+TwoEchelonSolution::TwoEchelonSolution(double solutionFitness, int numActiveSatellites, std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> roadDisMatrix, std::vector<std::vector<double>> aerialDisMatrix, std::set<int> cusNodes, std::set<int> satNodes, std::set<int> dedicatedCus, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols) {
 	solutionFitness = solutionFitness;
 	numberOfActiveSatellites = numActiveSatellites;
 	customerToDemandMap = cusToDemandMap;
 	satelliteToDemandMap = satToDemandMap;
-	distanceMatrix = disMatrix;
+	roadDistanceMatrix = roadDisMatrix;
+	aerialDistanceMatrix = aerialDisMatrix;
 	customerNodes = cusNodes;
 	satelliteNodes = satNodes;
+	customersDedicatedToDepot = dedicatedCus;
 	firstEchelonSolution = firstEchelonSol;
 	secondEchelonSolutions = secondEchelonSols;
 }
@@ -412,8 +438,13 @@ std::map<int, int> TwoEchelonSolution::getSatelliteToDemandMap() {
 }
 
 //returns distance  matrix
-std::vector<std::vector<double>> TwoEchelonSolution::getDistanceMatrix() {
-	return distanceMatrix;
+std::vector<std::vector<double>> TwoEchelonSolution::getRoadDistanceMatrix() {
+	return roadDistanceMatrix;
+}
+
+//returns distance  matrix
+std::vector<std::vector<double>> TwoEchelonSolution::getAerialDistanceMatrix() {
+	return aerialDistanceMatrix;
 }
 
 //returns customer nodes
@@ -423,6 +454,10 @@ std::set<int> TwoEchelonSolution::getCustomerNodes() {
 
 std::set<int> TwoEchelonSolution::getSatelliteNodes() {
 	return satelliteNodes;
+}
+
+std::set<int> TwoEchelonSolution::getCustomersDedicatedToDepot() {
+	return customersDedicatedToDepot;
 }
 
 //returns first echelon solution
@@ -465,13 +500,15 @@ void TwoEchelonSolution::clearSecondEchelonSolutionList() {
 }
 
 //populates two echelon solution
-void TwoEchelonSolution::populateTwoEchelonSolution(std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> disMatrix, std::set<int> cusNodes, std::set<int> satNodes) {
+void TwoEchelonSolution::populateTwoEchelonSolution(std::map<int, int> cusToDemandMap, std::map<int, int> satToDemandMap, std::vector<std::vector<double>> roadDisMatrix, std::vector<std::vector<double>> aerialDisMatrix, std::set<int> cusNodes, std::set<int> satNodes, std::set<int> dedicatedCusToDepo) {
 	numberOfActiveSatellites = secondEchelonSolutions.size();
 	customerToDemandMap = cusToDemandMap;
 	satelliteToDemandMap = satToDemandMap;
-	distanceMatrix = disMatrix;
+	roadDistanceMatrix = roadDisMatrix;
+	aerialDistanceMatrix = aerialDisMatrix;
 	customerNodes = cusNodes;
 	satelliteNodes = satNodes;
+	customersDedicatedToDepot = dedicatedCusToDepo;
 	solutionFitness = firstEchelonSolution.getCost();
 	for (auto & it : secondEchelonSolutions) {
 		solutionFitness += it.getCost();
@@ -558,7 +595,8 @@ bool Initialsolution::getFeasibilityStatus() {
 void Initialsolution::mapCustomersToSatellites() {
 	std::set<int> customers = problemParameters.getCustomerNodes();
 	std::set<int> satellites = problemParameters.getSatelliteNodes();
-	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	std::vector<std::vector<double>> roadDistance = problemParameters.getRoadDistanceMatrix();
+	std::vector<std::vector<double>> aerialDistance = problemParameters.getAerialDistanceMatrix();
 	std::set<int> firstEchelonCustomers = problemParameters.getCustomersMustServeByFirstEchelon();
 	//depot node is set to 0 by default
 	//assign customers to its nearest satellites
@@ -569,11 +607,17 @@ void Initialsolution::mapCustomersToSatellites() {
 			std::cout << "First echelon priority found!" << std::endl;
 		}
 		else {
-			double cost = 1000000;
+			double cost = INFINITY;
 			double variableCost = 0;
 			int sat = 0;
 			for (auto iter : satellites) {
-				variableCost = distance[it][iter];
+				if (iter == 0) {//depot sat == 0 one of the assumptions
+					variableCost = roadDistance[it][iter];
+				}
+				else {
+					variableCost = aerialDistance[it][iter];
+				}
+				//assign satellite to the current customer
 				if (variableCost < cost) {
 					cost = variableCost;
 					sat = iter;
@@ -597,7 +641,8 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 	int secondVehicleCapLimit = problemParameters.getSecondEchelonVehicleCapacityLimit();
 	std::map<int, int> customerToDemandMap = problemParameters.getCustomerToDemandMap();
 	std::set<int> satellites = problemParameters.getSatelliteNodes();
-	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	std::vector<std::vector<double>> roadDistance = problemParameters.getRoadDistanceMatrix();
+	std::vector<std::vector<double>> aerialDistance = problemParameters.getAerialDistanceMatrix();
 	//feasibility check of the clusters and update if necessary
 	for (auto it : satellites) {
 		if (it != 0) {
@@ -609,7 +654,7 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 				//std::cout << "satellite : " << (*iter).first << " customer : " << (*iter).second << std::endl;
 				capacity += customerToDemandMap[(*iter).second];
 				//std::cout << "capacity : " << capacity << std::endl;
-				CustomerToSatelliteDistance csd((*iter).second, (*iter).first, distance[(*iter).second][(*iter).first]);
+				CustomerToSatelliteDistance csd((*iter).second, (*iter).first, aerialDistance[(*iter).second][(*iter).first]);
 				//csd.showCustomerToSatelliteDistance();
 				customerToSatDistList.push(csd);
 				size++;
@@ -690,11 +735,16 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 	}
 	while (!freeCustomers.empty()){
 		auto cus = freeCustomers.begin();
-		double cost = 100000;
+		double cost = INFINITY;
 		double difCost = 0;
-		int sat = 100000;
+		int sat = INFINITY;
 		for (auto it: satellites) {
-			difCost = distance[*cus][it];
+			if (it == 0) {
+				difCost = roadDistance[*cus][it];
+			}
+			else {
+				difCost = aerialDistance[*cus][it];
+			}			
 			if (difCost < cost && (customerToDemandMap[*cus] <= satelliteToAvailableCapacityMap[it])) {
 				cost = difCost;
 				sat = it;
@@ -755,7 +805,8 @@ void Initialsolution::makeFeasibleCustomersCluster() {
 
 //generates cvrp solution
 void Initialsolution::generateCVRPSolutions() {
-	std::vector<std::vector<double>> distance = problemParameters.getDistanceMatrix();
+	std::vector<std::vector<double>> roadDistance = problemParameters.getRoadDistanceMatrix();
+	std::vector<std::vector<double>> aerialDistance = problemParameters.getAerialDistanceMatrix();
 	int capLimitFirst = problemParameters.getFirstEchelonVehicleCapacityLimit();
 	int capLimitSecond = problemParameters.getSecondEchelonVehicleCapacityLimit();
 	std::map<int, int> cusToDemand = problemParameters.getCustomerToDemandMap();
@@ -776,18 +827,22 @@ void Initialsolution::generateCVRPSolutions() {
 		for (auto iter : problemParameters.getSatelliteNodes()) {
 			int satID = iter;
 			std::vector<int> customerSet;
+			std::vector<std::vector<double>> distance;
 			for (auto it = satelliteToCustomerMap.lower_bound(iter); it != satelliteToCustomerMap.upper_bound(iter); ++it) {
 				customerSet.push_back((*it).second);
 			}
 			int capLimit = 0;
 			satID == 0 ? capLimit = capLimitFirst : capLimit = capLimitSecond;
+			satID == 0 ? distance = roadDistance : distance = aerialDistance;
 			std::cout << "\nsatellite : " << satID << " capacity limit for a route : " << capLimit << std::endl;
 			std::cout << "\nThe customers assigned to this satellite are : " << std::endl;
 			for (auto it: customerSet) {
 				std::cout << "customer : " << it <<" demand : "<<cusToDemand[it]<< std::endl;
 			}
+			std::cout << "\nGenetic Algorithm started" << std::endl;
 			Geneticalgorithm ga(satID, capLimit, cusToDemand, distance, customerSet);
 			ga.runGeneticAlgorithm();
+			std::cout << "\nGenetic Algoirthm terminated" << std::endl;
 			chrom = ga.getGASolution();
 			std::set<int> customers;
 			for (auto it: customerSet) {
@@ -801,7 +856,7 @@ void Initialsolution::generateCVRPSolutions() {
 
 //generates two echelon solution
 void Initialsolution::generateTwoEchelonSolution() {
-	twoEchelonSolution.populateTwoEchelonSolution(problemParameters.getCustomerToDemandMap(), satelliteToDemandMap, problemParameters.getDistanceMatrix(), problemParameters.getCustomerNodes(), problemParameters.getSatelliteNodes());
+	twoEchelonSolution.populateTwoEchelonSolution(problemParameters.getCustomerToDemandMap(), satelliteToDemandMap, problemParameters.getRoadDistanceMatrix(), problemParameters.getAerialDistanceMatrix(), problemParameters.getCustomerNodes(), problemParameters.getSatelliteNodes(), problemParameters.getCustomersMustServeByFirstEchelon());
 }
 
 //run initial solution algoirthm to get initial two echelon solution

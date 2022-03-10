@@ -47,7 +47,8 @@ public:
 class ProblemParameters {
 private:
 	std::map<int, int> customerToDemandMap;
-	std::vector<std::vector<double>> distanceMatrix;
+	std::vector<std::vector<double>> roadDistanceMatrix;
+	std::vector<std::vector<double>> aerialDistanceMatrix;
 	std::set<int> customerNodes;
 	std::set<int> satelliteNodes;
 	std::set<int> customersMustServeByFirstEchelon;
@@ -58,9 +59,10 @@ private:
 public:
 	ProblemParameters();
 	ProblemParameters(const ProblemParameters & probParam);
-	ProblemParameters(std::map<int, int> customerToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes,	std::set<int> satelliteNodes, std::set<int> customersMustServeByFirstEchelon, int firstEchelonVehicleCapacityLimit, int secondEchelonVehicleCapacityLimit, int maxNumberOfVehicleInFirstEchelon, int maxNumberOfVehicleInSecondEchelon);
+	ProblemParameters(std::map<int, int> customerToDemandMap, std::vector<std::vector<double>> roadDistanceMatrix, std::vector<std::vector<double>> aerialDistanceMatrix, std::set<int> customerNodes,	std::set<int> satelliteNodes, std::set<int> customersMustServeByFirstEchelon, int firstEchelonVehicleCapacityLimit, int secondEchelonVehicleCapacityLimit, int maxNumberOfVehicleInFirstEchelon, int maxNumberOfVehicleInSecondEchelon);
 	void showCustomerToDemandMap();
-	void showDistanceMatrix();
+	void showRoadDistanceMatrix();
+	void showAerialDistanceMatrix();
 	void showCustomerNodes();
 	void showSatelliteNodes();
 	void showCustomersMustServeByFirstEchelon();
@@ -69,7 +71,8 @@ public:
 	void showMaxNumberOfVehicleInFirstEchelon();
 	void showMaxNumberOfVehicleInSecondEchelon();
 	std::map<int, int> getCustomerToDemandMap();
-	std::vector<std::vector<double>> getDistanceMatrix();
+	std::vector<std::vector<double>> getRoadDistanceMatrix();
+	std::vector<std::vector<double>> getAerialDistanceMatrix();
 	std::set<int> getCustomerNodes();
 	std::set<int> getSatelliteNodes();
 	std::set<int> getCustomersMustServeByFirstEchelon();
@@ -121,29 +124,33 @@ private:
 	int numberOfActiveSatellites = 0;
 	std::map<int, int> customerToDemandMap;
 	std::map<int, int> satelliteToDemandMap;
-	std::vector<std::vector<double>> distanceMatrix;
+	std::vector<std::vector<double>> roadDistanceMatrix;
+	std::vector<std::vector<double>> aerialDistanceMatrix;
 	std::set<int> customerNodes;
 	std::set<int> satelliteNodes;
+	std::set<int> customersDedicatedToDepot;
 	CVRPSolution firstEchelonSolution;
 	std::list<CVRPSolution> secondEchelonSolutions;
 public:
 	TwoEchelonSolution();
 	TwoEchelonSolution(const TwoEchelonSolution& locSol);
-	TwoEchelonSolution(double solutionFitness, int numberOfActiveSatellites, std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols);
+	TwoEchelonSolution(double solutionFitness, int numberOfActiveSatellites, std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> roadDistanceMatrix, std::vector<std::vector<double>> aerialDistanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes, std::set<int> customersDedicatedToDepot, CVRPSolution firstEchelonSol, std::list<CVRPSolution> secondEchelonSols);
 	int getSolutionFitness();
 	int getNumberOfActiveSatellites();
 	std::map<int, int> getCustomerToDemandMap();
 	std::map<int, int> getSatelliteToDemandMap();
-	std::vector<std::vector<double>> getDistanceMatrix();
+	std::vector<std::vector<double>> getRoadDistanceMatrix();
+	std::vector<std::vector<double>> getAerialDistanceMatrix();
 	std::set<int> getCustomerNodes();
 	std::set<int> getSatelliteNodes();
+	std::set<int> getCustomersDedicatedToDepot();
 	CVRPSolution getFirstEchelonSolution();
 	std::list<CVRPSolution> getSecondEchelonSolutions();
 	void insertFirstEchelonSolution(CVRPSolution cvrp);
 	void insertSecondEchelonSolution(CVRPSolution cvrp);
 	void showTwoEchelonSolution();
 	void clearSecondEchelonSolutionList();
-	void populateTwoEchelonSolution(std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> distanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes);
+	void populateTwoEchelonSolution(std::map<int, int> customerToDemandMap, std::map<int, int> satelliteToDemandMap, std::vector<std::vector<double>> roadDistanceMatrix, std::vector<std::vector<double>> aerialDistanceMatrix, std::set<int> customerNodes, std::set<int> satelliteNodes, std::set<int> dedicatedCusToDepo);
 };
 
 //initial solution
