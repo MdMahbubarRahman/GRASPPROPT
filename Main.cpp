@@ -134,67 +134,17 @@ int main(){
 
     //std::cout << "\nRoad distance 60 to 4 is : " << roadDistance[4][60] << std::endl;
     
-    ProblemParameters probParam(demand, aerialDistance, cusCluster, satCluster, customersMustServeByFirstEchelon, TRUCK_CAP_LIMIT, UAV_CAP_LIMIT, MAX_NO_TRUCK,  MAX_NO_UAV);
+    ProblemParameters probParam(demand, roadDistance, aerialDistance, cusCluster, satCluster, customersMustServeByFirstEchelon, TRUCK_CAP_LIMIT, UAV_CAP_LIMIT, MAX_NO_TRUCK,  MAX_NO_UAV);
+    //Initialsolution init(probParam);
+    //init.runInitialSolution();
+    
     std::cout << "\nRun the main GRASP with Path Relinking algorithm\n" << std::endl;
     GRASPPR Alg(probParam);
     Alg.runGraspPr();
+    /*
     std::cout << "\nThe GRASP with Path Relinking solution : " << std::endl;
     Alg.getGraspPRSolution().showTwoEchelonSolution();
-    
-
-
-    /*
-    std::vector<std::vector<double>> costMatrix;
-    std::vector<double> vec{10,20,30,12,15};
-    std::vector<double> vec1{5,21,10,10,25};
-    std::vector<double> vec2{20,10,40,10,5};
-    std::vector<double> vec3{5,11,20,8,5};
-    std::vector<double> vec4{15,15,25,18,10};
-    costMatrix.push_back(vec);
-    costMatrix.push_back(vec1);
-    costMatrix.push_back(vec2);
-    costMatrix.push_back(vec3);
-    costMatrix.push_back(vec4);
     */
-    /*
-    for (int i = 0; i < 5; i++) {
-        std::vector<double> vec;
-        for (int j = 0; j < 5; j++) {
-            int val = 0;
-            if (i == j) {
-                val = 100000;
-            }
-            else {
-                val = (i + j) * 4;
-            }
-            vec.push_back(val);
-        }
-        costMatrix.push_back(vec);
-        vec.clear();
-    }
-    */
-    /*
-    std::cout << "\nShow the cost matrix." << std::endl;
-    for (int i = 0; i < costMatrix.size(); i++) {
-        for (int j = 0; j < costMatrix.size(); j++) {
-            std::cout << costMatrix[i][j] << " ";
-        }
-        std::cout << ";" << std::endl;
-    }
-    
-    std::vector<int> tsp;
-    tsp.push_back(1);
-    tsp.push_back(2);
-    tsp.push_back(4);
-    tsp.push_back(3);
-    tsp.push_back(0);
-    
-    
-    TspH assignment = TspH(tsp, costMatrix);
-    assignment.solveAssignmentProblem();
-    assignment.showAssignmentOutcomes();
-    */
-
     return 0;
 }
 
