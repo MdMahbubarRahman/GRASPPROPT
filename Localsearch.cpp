@@ -65,6 +65,10 @@ bool Compare::operator()(CustomerDepotDifferentialCost & a, CustomerDepotDiffere
 //default constructor
 Localsearch::Localsearch() {
 	currentSolutionImproved = false;
+	firstEchelonVehicleCapacityLimit = 0;
+	secondEchelonVehicleCapacityLimit = 0;
+	maxNumberOfVehicleInFirstEchelon = 0;
+	maxNumberOfVehicleInSecondEchelon = 0;
 }
 
 //copy constructor
@@ -76,14 +80,21 @@ Localsearch::Localsearch(const Localsearch& locsrch) {
 	currentSatelliteSolution = locsrch.currentSatelliteSolution;
 	potentialSatelliteSolution = locsrch.potentialSatelliteSolution;
 	currentSolutionImproved = locsrch.currentSolutionImproved;
+	firstEchelonVehicleCapacityLimit = locsrch.firstEchelonVehicleCapacityLimit;
+	secondEchelonVehicleCapacityLimit = locsrch.secondEchelonVehicleCapacityLimit;
+	maxNumberOfVehicleInFirstEchelon = locsrch.maxNumberOfVehicleInFirstEchelon;
+	maxNumberOfVehicleInSecondEchelon = locsrch.maxNumberOfVehicleInSecondEchelon;
 }
 
 //constructor
-Localsearch::Localsearch(TwoEchelonSolution currSol, TwoEchelonSolution bestSol) {
+Localsearch::Localsearch(TwoEchelonSolution currSol, ProblemParameters probParams) {
 	currentSolutionImproved = false;
 	currentSolution = currSol;
-	bestSolution = bestSol;
-	firstEchelonSolution = currentSolution.getFirstEchelonSolution();
+	firstEchelonSolution = currSol.getFirstEchelonSolution();
+	firstEchelonVehicleCapacityLimit = probParams.getFirstEchelonVehicleCapacityLimit();
+	secondEchelonVehicleCapacityLimit = probParams.getSecondEchelonVehicleCapacityLimit();
+	maxNumberOfVehicleInFirstEchelon = probParams.getMaxNumberOfVehicleInFirstEchelon();
+	maxNumberOfVehicleInSecondEchelon = probParams.getMaxNumberOfVehicleInSecondEchelon();
 }
 
 //returns current solution
@@ -112,8 +123,12 @@ void Localsearch::createCustomersPriorityQueue() {
 	std::map<int, int> customerToDepotDict;
 	std::vector<int> firstEchelonSol = currentSolution.getFirstEchelonSolution().getSolution();
 	int depotID = currentSolution.getFirstEchelonSolution().getSatelliteNode();
+	std::set<int> dedicatedToDepotCustomers = currentSolution.getCustomersDedicatedToDepot();
 	for (auto it : currentSolution.getFirstEchelonSolution().getCustomers()) {
-		customerToDepotDict.insert(std::pair<int, int>(it, depotID));
+		auto iter = dedicatedToDepotCustomers.find(it);
+		if (iter == dedicatedToDepotCustomers.end()) {
+			customerToDepotDict.insert(std::pair<int, int>(it, depotID));
+		}
 	}
 	std::list<CVRPSolution> secondEchelonSolutions = currentSolution.getSecondEchelonSolutions();
 	for (auto & it : secondEchelonSolutions) {
@@ -128,7 +143,7 @@ void Localsearch::createCustomersPriorityQueue() {
 		std::cout << "customer : " << it.first << " depot/sat : " << it.second << std::endl;
 	}
 	*/
-	//populate the customer order list/priority queue/need to exclude dedicated customers
+	//populate the customer order list/priority queue
 	for (auto &it : customerToDepotDict) {
 		int custID = it.first;
 		std::set<int> satelliteNodes = currentSolution.getSatelliteNodes();
@@ -137,12 +152,18 @@ void Localsearch::createCustomersPriorityQueue() {
 			int currentDepot = it.second;
 			int potentialDepo = 0;
 			double cost = 0;
-			double currCost = currentSolution.getDistanceMatrix()[custID][currentDepot];
-			double diffCost = 1000000;
+			double currCost = 0;
+			currentDepot == 0 ? currCost = currentSolution.getRoadDistanceMatrix()[custID][currentDepot] : currCost = currentSolution.getAerialDistanceMatrix()[custID][currentDepot];
+			double diffCost = INFINITY;
 			for (auto sat : currentSolution.getSatelliteNodes()) {
 				if (sat != currentDepot) {
 					if (sat != custID) {
-						cost = currentSolution.getDistanceMatrix()[custID][sat] - currCost;
+						if (sat == 0) {
+							cost = currentSolution.getRoadDistanceMatrix()[custID][sat] - currCost;
+						}             //RC_ij = c_ik-c_ij
+						else {
+							cost = currentSolution.getAerialDistanceMatrix()[custID][sat] - currCost;
+						}
 						if (cost < diffCost) {
 							diffCost = cost;
 							potentialDepo = sat;
@@ -194,25 +215,32 @@ void Localsearch::runLocalSearch() {
 				}
 			}
 		}
-		//update potential satellite
-		CVRPSolution updatedPotentialSatSol;
+		//update potential satellite  
+		CVRPSolution updatedPotentialSatSol;   
 		if (potentialDepot != firstEchelonSolution.getSatelliteNode()) {
 			int demand = currentSatelliteSolution.getCustomerTodemandMap()[cusID];
-			std::map<int, int> cusToDemandMapUp = potentialSatelliteSolution.getCustomerTodemandMap();
-			cusToDemandMapUp.insert(std::pair<int, int>(cusID, demand));
-			std::vector<int> cusCluster;
-			for (auto it : potentialSatelliteSolution.getCustomers()) {
-				cusCluster.push_back(it);
+			int satisfiedDemand = potentialSatelliteSolution.getTotalDemandSatisfied();
+			//Check whether the potential satellite can adapt the new customer?
+			if ((demand + satisfiedDemand) <= (secondEchelonVehicleCapacityLimit * maxNumberOfVehicleInSecondEchelon)) {
+				std::map<int, int> cusToDemandMapUp = potentialSatelliteSolution.getCustomerTodemandMap();
+				cusToDemandMapUp.insert(std::pair<int, int>(cusID, demand));
+				std::vector<int> cusCluster;
+				for (auto it : potentialSatelliteSolution.getCustomers()) {
+					cusCluster.push_back(it);
+				}
+				cusCluster.push_back(cusID);
+				Geneticalgorithm gap(potentialDepot, potentialSatelliteSolution.getMaxRouteCapacity(), cusToDemandMapUp, currentSolution.getAerialDistanceMatrix(), cusCluster);
+				gap.runGeneticAlgorithm();
+				Chromosome chromp = gap.getGASolution();
+				std::set<int> customersp;
+				for (auto it : cusCluster) {
+					customersp.insert(it);
+				}
+				updatedPotentialSatSol = CVRPSolution(chromp, customersp, cusToDemandMapUp);
 			}
-			cusCluster.push_back(cusID);
-			Geneticalgorithm gap(potentialDepot, potentialSatelliteSolution.getMaxRouteCapacity(), cusToDemandMapUp, currentSolution.getDistanceMatrix(), cusCluster);
-			gap.runGeneticAlgorithm();
-			Chromosome chromp = gap.getGASolution();
-			std::set<int> customersp;
-			for (auto it : cusCluster) {
-				customersp.insert(it);
+			else {
+				continue;
 			}
-			updatedPotentialSatSol = CVRPSolution(chromp, customersp, cusToDemandMapUp);
 		}
 		//update current satellite
 		CVRPSolution updatedCurrentSatSol;
@@ -232,7 +260,7 @@ void Localsearch::runLocalSearch() {
 					cusClusterCur.push_back(it);
 				}
 			}
-			Geneticalgorithm gac(currentDepot, currentSatelliteSolution.getMaxRouteCapacity(), cusToDemandMapCur, currentSolution.getDistanceMatrix(), cusClusterCur);
+			Geneticalgorithm gac(currentDepot, currentSatelliteSolution.getMaxRouteCapacity(), cusToDemandMapCur, currentSolution.getAerialDistanceMatrix(), cusClusterCur);
 			gac.runGeneticAlgorithm();
 			Chromosome chromc = gac.getGASolution();
 			std::set<int> customersc;
@@ -267,7 +295,7 @@ void Localsearch::runLocalSearch() {
 					customersVec.push_back(it);
 				}
 			}
-			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -297,7 +325,7 @@ void Localsearch::runLocalSearch() {
 			customersVec.push_back(cusID);
 			int cusDemand = currentSolution.getCustomerToDemandMap()[cusID];
 			cusToDemandMap.insert(std::pair<int, int>(cusID, cusDemand));
-			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -339,7 +367,7 @@ void Localsearch::runLocalSearch() {
 				cusToDemandMap.insert(std::pair<int, int>(potentialDepot, potentialSatDemand));
 				customersVec.push_back(potentialDepot);
 			}
-			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonSolution.getMaxRouteCapacity(), cusToDemandMap, currentSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -356,18 +384,18 @@ void Localsearch::runLocalSearch() {
 		for (auto & it : secondEchelonSolutions) {
 			if (it.getSatelliteNode() == currentDepot){
 				newTwoEchelonSol.insertSecondEchelonSolution(updatedCurrentSatSol);
-				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), it.getTotalDemandSatisfied()));
+				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), updatedCurrentSatSol.getTotalDemandSatisfied()));
 			}
 			else if (it.getSatelliteNode() == potentialDepot){
 				newTwoEchelonSol.insertSecondEchelonSolution(updatedPotentialSatSol);
-				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), it.getTotalDemandSatisfied()));
+				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), updatedPotentialSatSol.getTotalDemandSatisfied()));
 			}
 			else {
 				newTwoEchelonSol.insertSecondEchelonSolution(it);
 				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), it.getTotalDemandSatisfied()));
 			}
 		}
-		newTwoEchelonSol.populateTwoEchelonSolution(currentSolution.getCustomerToDemandMap(), satToDemandMap, currentSolution.getDistanceMatrix(), currentSolution.getCustomerNodes(), currentSolution.getSatelliteNodes());
+		newTwoEchelonSol.populateTwoEchelonSolution(currentSolution.getCustomerToDemandMap(), satToDemandMap, currentSolution.getRoadDistanceMatrix(), currentSolution.getAerialDistanceMatrix(), currentSolution.getCustomerNodes(), currentSolution.getSatelliteNodes(), currentSolution.getCustomersDedicatedToDepot());
 		//check with terminating conditions and/or update local solution
 		if (newTwoEchelonSol.getSolutionFitness() < currentSolution.getSolutionFitness()) {
 			currentSolution = newTwoEchelonSol;

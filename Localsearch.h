@@ -56,10 +56,14 @@ private:
 	CVRPSolution currentSatelliteSolution;
 	CVRPSolution potentialSatelliteSolution;
 	bool currentSolutionImproved;
+	int firstEchelonVehicleCapacityLimit;
+	int secondEchelonVehicleCapacityLimit;
+	int maxNumberOfVehicleInFirstEchelon;
+	int maxNumberOfVehicleInSecondEchelon;
 public:
 	Localsearch();
 	Localsearch(const Localsearch & locsrch);
-	Localsearch(TwoEchelonSolution currentSolution, TwoEchelonSolution bestSolution);
+	Localsearch(TwoEchelonSolution currentSolution, ProblemParameters probParams);
 	TwoEchelonSolution getCurrentSolution();
 	TwoEchelonSolution getBestSolution();
 	bool isCurrentSolutionImproved();
