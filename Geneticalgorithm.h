@@ -6,6 +6,7 @@
 #include <iterator>
 #include <cmath>
 #include <set>
+#include <random>
 
 #include "Tabusearch.h"
 
