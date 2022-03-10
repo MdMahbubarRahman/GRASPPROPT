@@ -151,13 +151,30 @@ void Pathrelinking::runPathRelinking() {
 	std::set<int> allCustomers = localSolution.getCustomerNodes();
 	for (auto it : allCustomers) {
 		if (localCusToSatMap[it] != bestCusToSatMap[it]) {
-			double dist = bestSolution.getDistanceMatrix()[it][bestCusToSatMap[it]] - localSolution.getDistanceMatrix()[it][localCusToSatMap[it]];
+			double bestDist = 0;
+			double localDist = 0;
+			//cus to sat distance for local solution
+			if (localCusToSatMap[it] == localDepot) {
+				localDist = localSolution.getRoadDistanceMatrix()[it][localDepot];
+			}
+			else {
+				localDist = localSolution.getAerialDistanceMatrix()[it][localCusToSatMap[it]];
+			}
+			//cus to sat distance for best solution
+			if (bestCusToSatMap[it] == bestDepot) {
+				bestDist = bestSolution.getRoadDistanceMatrix()[it][bestDepot];
+			}
+			else {
+				bestDist = bestSolution.getAerialDistanceMatrix()[it][bestCusToSatMap[it]];
+			}
+			double dist = abs(bestDist - localDist);
 			CustomerStatus cs(it, localCusToSatMap[it], bestCusToSatMap[it], dist);
 			customersToBeReassigned.push(cs);
 		}
 	}
 	std::cout << "The size of the priority queue is : " << customersToBeReassigned.size() << std::endl;
 	//perform path relinking and optimization
+	int maxPathIter = 0;
 	while (!customersToBeReassigned.empty()) {
 		CustomerStatus cusStatus = customersToBeReassigned.top();
 		customersToBeReassigned.pop();
@@ -204,7 +221,8 @@ void Pathrelinking::runPathRelinking() {
 				cusCluster.push_back(it);
 			}
 			cusCluster.push_back(cusID);
-			Geneticalgorithm gap(addToSat, customerToAddToCVRPSol.getMaxRouteCapacity(), cusToDemandMapUp, intermediateSolution.getDistanceMatrix(), cusCluster);
+			//need to check whether added capacity makes the satellite infeasible?
+			Geneticalgorithm gap(addToSat, customerToAddToCVRPSol.getMaxRouteCapacity(), cusToDemandMapUp, intermediateSolution.getAerialDistanceMatrix(), cusCluster);
 			gap.runGeneticAlgorithm();
 			Chromosome chromp = gap.getGASolution();
 			std::set<int> customersp;
@@ -231,7 +249,7 @@ void Pathrelinking::runPathRelinking() {
 					cusClusterCur.push_back(it);
 				}
 			}
-			Geneticalgorithm gac(dropFromSat, customerToDropFromCVRPSol.getMaxRouteCapacity(), cusToDemandMapCur, intermediateSolution.getDistanceMatrix(), cusClusterCur);
+			Geneticalgorithm gac(dropFromSat, customerToDropFromCVRPSol.getMaxRouteCapacity(), cusToDemandMapCur, intermediateSolution.getAerialDistanceMatrix(), cusClusterCur);
 			gac.runGeneticAlgorithm();
 			Chromosome chromc = gac.getGASolution();
 			std::set<int> customersc;
@@ -266,7 +284,7 @@ void Pathrelinking::runPathRelinking() {
 					customersVec.push_back(it);
 				}
 			}
-			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -296,7 +314,7 @@ void Pathrelinking::runPathRelinking() {
 			customersVec.push_back(cusID);
 			int cusDemand = intermediateSolution.getCustomerToDemandMap()[cusID];
 			cusToDemandMap.insert(std::pair<int, int>(cusID, cusDemand));
-			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -338,7 +356,7 @@ void Pathrelinking::runPathRelinking() {
 				cusToDemandMap.insert(std::pair<int, int>(addToSat, addToSatDemand));
 				customersVec.push_back(addToSat);
 			}
-			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getDistanceMatrix(), customersVec);
+			Geneticalgorithm gad(depot, firstEchelonCVRPSol.getMaxRouteCapacity(), cusToDemandMap, intermediateSolution.getRoadDistanceMatrix(), customersVec);
 			gad.runGeneticAlgorithm();
 			Chromosome chromd = gad.getGASolution();
 			std::set<int> customersd;
@@ -366,13 +384,17 @@ void Pathrelinking::runPathRelinking() {
 				satToDemandMap.insert(std::pair<int, int>(it.getSatelliteNode(), it.getTotalDemandSatisfied()));
 			}
 		}
-		newTwoEchelonSol.populateTwoEchelonSolution(intermediateSolution.getCustomerToDemandMap(), satToDemandMap, intermediateSolution.getDistanceMatrix(), intermediateSolution.getCustomerNodes(), intermediateSolution.getSatelliteNodes());
+		newTwoEchelonSol.populateTwoEchelonSolution(intermediateSolution.getCustomerToDemandMap(), satToDemandMap, intermediateSolution.getRoadDistanceMatrix(), intermediateSolution.getAerialDistanceMatrix(), intermediateSolution.getCustomerNodes(), intermediateSolution.getSatelliteNodes(), intermediateSolution.getCustomersDedicatedToDepot());
 		//check with terminating conditions and/or update local solution
 		if (newTwoEchelonSol.getSolutionFitness() < intermediateSolution.getSolutionFitness()) {
 			currentBestSolution = newTwoEchelonSol;
 			intermediateSolution = newTwoEchelonSol;
-			currentBestSolution.showTwoEchelonSolution();
-			break;
+			maxPathIter += 1;
+			if (maxPathIter >= 2) {
+				break;
+			}
+			//currentBestSolution.showTwoEchelonSolution();
+			//break;
 		}
 	}
 }
