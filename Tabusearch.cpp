@@ -237,7 +237,7 @@ std::list<FeasibleSolution> Neighbourhood::getKNeighbourSolutions() {
 //returns the best solution from the neighbourhood
 //&deletes the best solution from the list
 FeasibleSolution Neighbourhood::getBestFromNeighbour() {
-	double cost = 1000000000.0;
+	double cost = INFINITY;
 	FeasibleSolution bestSol;
 	std::list<FeasibleSolution>::iterator iter;
 	if (!neighbourSolution.empty()) {
@@ -392,7 +392,7 @@ void Tabusearch::selectRandomAddAndDropRoutes() {
 //generate neighbour solution by Add and Drop heuristic
 FeasibleSolution Tabusearch::generateNeighbourByAddDrop(std::list<std::list<int>> newRoutes, double newCost, int sepInt, int addToRoute, int dropFromRoute, int dropNode) {
 	double currentAddRouteCost = 0.0;
-	double newAddRouteCost = 10000000000.0;
+	double newAddRouteCost = INFINITY;
 	double currentDropRouteCost = 0.0;
 	double newDropRouteCost = 0.0;
 	int iterator = 1;
@@ -797,10 +797,11 @@ void Tabusearch::runTabuSearch() {
 	double prevCost = INFINITY;
 	double currentCost = 0;
 	int iter = 0;
+	//performTspHeuristics();
 	for (int i = 0; i < MaxIter; ++i) {
 		iter++;
-		generateKChainNeighbourSolutions();
 		generateOneSwapSolutions();
+		generateKChainNeighbourSolutions();
 		currentCost = incumbentSolution.getCost();
 		if (currentCost < prevCost) {
 			prevCost = currentCost;
@@ -1074,3 +1075,4 @@ void Tabusearch::showTabuSolution() {
 	std::cout << "\nThe tabu search best solution is the following : " << std::endl;
 	incumbentSolution.showSolution();
 }
+
