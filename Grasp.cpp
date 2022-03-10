@@ -108,7 +108,8 @@ void AdaptiveCustomersAssignmentProbabilityDistribution::updateAdaptiveCustomers
 
 //populates initial customers' assignment probability distribution
 void AdaptiveCustomersAssignmentProbabilityDistribution::populateAdaptiveCusAssgnProbDist(ProblemParameters probParams) {
-	std::vector<std::vector<double>> distanceMat = probParams.getDistanceMatrix();
+	std::vector<std::vector<double>> roadDistanceMat = probParams.getRoadDistanceMatrix();
+	std::vector<std::vector<double>> aerialDistanceMat = probParams.getAerialDistanceMatrix();
 	std::set<int> customers = probParams.getCustomerNodes();
 	std::set<int> satellites = probParams.getSatelliteNodes();
 	std::set<int> dedicatedCusForFirstEchelon = probParams.getCustomersMustServeByFirstEchelon();
@@ -118,14 +119,25 @@ void AdaptiveCustomersAssignmentProbabilityDistribution::populateAdaptiveCusAssg
 		double totalDistance = 0;
 		std::map<int, double> satToProbMap;
 		for (auto itt : satellites) {
-			totalDistance += distanceMat[it][itt];
+			if (itt != 0) {
+				totalDistance += aerialDistanceMat[it][itt];
+			}
+			else {
+				totalDistance += roadDistanceMat[it][itt];
+			}
 		}
 		//check dedicated condition
 		auto iter = dedicatedCusForFirstEchelon.find(it);
 		if (iter == dedicatedCusForFirstEchelon.end()) {
 			for (auto itt : satellites) {
-				double prob = (1 - (distanceMat[it][itt] / totalDistance)) / (satellites.size());
-				satToProbMap.insert(std::pair<int, double>(itt, prob));
+				if (itt != 0) {
+					double prob = (1 - (aerialDistanceMat[it][itt] / totalDistance)) / (satellites.size());
+					satToProbMap.insert(std::pair<int, double>(itt, prob));
+				}
+				else {
+					double prob = (1 - (roadDistanceMat[it][itt] / totalDistance)) / (satellites.size());
+					satToProbMap.insert(std::pair<int, double>(itt, prob));
+				}
 			}
 		}
 		else {
@@ -142,14 +154,12 @@ void AdaptiveCustomersAssignmentProbabilityDistribution::populateAdaptiveCusAssg
 		customerToSatAssignmentMap.insert(std::pair<int, CustomerToSatelliteAssignmentProbabilities>(it, cusToSatProb));
 	}
 	//show the probs
-	/*
 	for (auto &it : customerToSatAssignmentMap) {
 		std::cout << "the customer id : " << it.first << std::endl;
 		for (auto & itr : it.second.getSatIDToProbabilityMap()) {
 			std::cout << "sat id : " << itr.first << " assignment prob : " << itr.second << std::endl;
 		}
 	}
-	*/
 }
 
 //comparator
@@ -193,7 +203,8 @@ std::multimap<int, int> Grasp::getSatelliteToCustomersMap() {
 //defines customers cluster to each satellite
 void Grasp::makeCustomerToSatelliteAssignment() {
 	//populate the priority queue
-	for (auto & it : cusAssignmentDistribution.getCustomerToSatAssignmentMap()) {
+	std::map<int, CustomerToSatelliteAssignmentProbabilities> customerAssignmentDist = cusAssignmentDistribution.getCustomerToSatAssignmentMap();
+	for (auto & it : customerAssignmentDist) {
 		cusAssignQueue.push(it.second);
 	}
 	//assign customers to satellites
@@ -224,13 +235,13 @@ void Grasp::makeCustomerToSatelliteAssignment() {
 		}
 		std::cout << "\n" << std::endl;
 	}
-	//show th assignment per satellite
-	/*
+	//show the assignments per satellite
+	
 	std::cout << "show satellite to customer assignment" << std::endl;
 	for (auto & it: satelliteToCustomersMap) {
 		std::cout << "sat ID : " << it.first << ", customer id : " << it.second << std::endl;
 	}
-	*/
+	
 	int depotDemand = satelliteToDemandMap[0];
 	for (auto it: probParams.getSatelliteNodes()) {
 		if (it != 0) {
@@ -239,32 +250,37 @@ void Grasp::makeCustomerToSatelliteAssignment() {
 	}
 	satelliteToDemandMap.erase(0);
 	satelliteToDemandMap.insert(std::pair<int, int>(0, depotDemand));
-	/*
+	
 	std::cout << "show satellite to demand map" << std::endl;
 	for (auto& it : satelliteToDemandMap) {
 		std::cout << "sat ID : " << it.first << " demand : " << it.second << std::endl;
 	}
-	*/
+	
 	for (auto it : probParams.getSatelliteNodes()) {
 		if (it != 0) {
-			satelliteToCustomersMap.insert(std::make_pair(0, it));
+			//need to exclude satellites with zero customer demand satisfaction
+			int satDemand = satelliteToDemandMap[it];
+			if (satDemand != 0) {
+				satelliteToCustomersMap.insert(std::make_pair(0, it));
+			}
 		}
 	}
 }
 
 //generates cvrp solution
 void Grasp::generateCVRPSolutions() {
-	std::vector<std::vector<double>> distance = probParams.getDistanceMatrix();
+	std::vector<std::vector<double>> roadDistance = probParams.getRoadDistanceMatrix();
+	std::vector<std::vector<double>> aerialDistance = probParams.getAerialDistanceMatrix();
 	int capLimitFirst = probParams.getFirstEchelonVehicleCapacityLimit();
 	int capLimitSecond = probParams.getSecondEchelonVehicleCapacityLimit();
 	std::map<int, int> cusToDemand = probParams.getCustomerToDemandMap();
-	//update cusToDemand map
+	//update cusToDemand map for sat-customers for cvrp, considering cusTodDemand map is not populated with sat's demand values 
 	for (auto& it : satelliteToDemandMap) {
 		if (it.first != 0) {
 			cusToDemand.insert(it);
 		}
 	}
-	//solve cvrp problem
+	//solve cvrp problems
 	graspSolution.clearSecondEchelonSolutionList();
 	for (auto iter : probParams.getSatelliteNodes()) {
 		int satID = iter;
@@ -279,9 +295,10 @@ void Grasp::generateCVRPSolutions() {
 		for (auto it : customerSet) {
 			std::cout << "customer : " << it << " demand : " << cusToDemand[it] << std::endl;
 		}
-		Geneticalgorithm ga(satID, capLimit, cusToDemand, distance, customerSet);
-		ga.runGeneticAlgorithm();
-		chrom = ga.getGASolution();
+		Geneticalgorithm genAlg;
+		satID != 0 ? genAlg = Geneticalgorithm(satID, capLimit, cusToDemand, aerialDistance, customerSet) : genAlg = Geneticalgorithm(satID, capLimit, cusToDemand, roadDistance, customerSet);
+		genAlg.runGeneticAlgorithm();
+		chrom = genAlg.getGASolution();
 		std::set<int> customers;
 		for (auto it : customerSet) {
 			customers.insert(it);
@@ -294,7 +311,7 @@ void Grasp::generateCVRPSolutions() {
 
 //generates two echelon solution
 void Grasp::generateTwoEchelonSolution() {
-	graspSolution.populateTwoEchelonSolution(probParams.getCustomerToDemandMap(), satelliteToDemandMap, probParams.getDistanceMatrix(), probParams.getCustomerNodes(), probParams.getSatelliteNodes());
+	graspSolution.populateTwoEchelonSolution(probParams.getCustomerToDemandMap(), satelliteToDemandMap, probParams.getRoadDistanceMatrix(), probParams.getAerialDistanceMatrix(), probParams.getCustomerNodes(), probParams.getSatelliteNodes(), probParams.getCustomersMustServeByFirstEchelon());
 }
 
 
