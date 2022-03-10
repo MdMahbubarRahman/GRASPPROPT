@@ -36,6 +36,7 @@ void GRASPPR::runGraspPr() {
 	//start the multistart procedure for GRASP with Path Relinking
 	int maxIter = 10;
 	int iterNumber = 0;
+	int localSrchFlag = 0;
 	TwoEchelonSolution intermediateSolution;
 	std::list<TwoEchelonSolution> graspSols;
 	while (iterNumber < maxIter){
@@ -44,18 +45,21 @@ void GRASPPR::runGraspPr() {
 		Grasp grasp = Grasp(abc, probParam);
 		grasp.runGrasp();
 		intermediateSolution = grasp.getGraspSolution();
+		//std::cout << "\nThe first GRASP solution is : \n" << std::endl;
+		//intermediateSolution.showTwoEchelonSolution();
 		std::cout << "Run FEASIBILITY search on the grasp solution" << std::endl;
 		Feasibilitysearch febSrch(probParam, intermediateSolution);
 		febSrch.runFeasibilitySearch();
 		if (febSrch.getFeasibilityStatus() == 1) {
 			intermediateSolution = febSrch.getFeasibilitySearchSolution();
-			if (intermediateSolution.getSolutionFitness() <= currentBestTwoEchelonSol.getSolutionFitness()+100) {
+			if (intermediateSolution.getSolutionFitness() <= currentBestTwoEchelonSol.getSolutionFitness()+5000) {  //NOW strictly looks for better solution
 				std::cout << "Perform LOCAL search on the current solution" << std::endl;
-				Localsearch localSrch(intermediateSolution, currentBestTwoEchelonSol);
+				Localsearch localSrch(intermediateSolution, probParam);
 				localSrch.createCustomersPriorityQueue();
 				localSrch.runLocalSearch();
 				if (localSrch.isCurrentSolutionImproved() == 1) {
 					intermediateSolution = localSrch.getCurrentSolution();
+					localSrchFlag += 1;
 					std::cout << "Run Path Relinking with the current solution and currentBestSolution" << std::endl;
 					Pathrelinking path(intermediateSolution, currentBestTwoEchelonSol);
 					path.runPathRelinking();
@@ -69,7 +73,7 @@ void GRASPPR::runGraspPr() {
 		//store current grasp solution
 		graspSols.push_back(intermediateSolution);
 	}
-	finalTwoEchelonSol = currentBestTwoEchelonSol;
+	//finalTwoEchelonSol = currentBestTwoEchelonSol;
 	auto stop = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = stop - start;
 	//showTabuSolution();
@@ -77,13 +81,16 @@ void GRASPPR::runGraspPr() {
 	std::cout<<"GRASPPR Duration: " << secDuration << " seconds" << std::endl;
 	std::cout << "\nThe initial solution for the Two Echelon VRP is : " << std::endl;
 	initialTwoEchelonSol.showTwoEchelonSolution();
-	//std::cout << "\nShow grasp solutions" << std::endl;
-	//int i = 0;
-	//for (auto &it: graspSols) {
-	//	std::cout << "\nGRASP solution number : " << i << std::endl;
-	//	it.showTwoEchelonSolution();
-	//	i++;
-	//}
+	std::cout << "\nShow grasp solutions" << std::endl;
+	int i = 0;
+	for (auto &it: graspSols) {
+		std::cout << "\nGRASP solution number : " << i << std::endl;
+		it.showTwoEchelonSolution();
+		i++;
+	}
+	std::cout << "\nNumber of local search is : " << localSrchFlag << std::endl;
+	std::cout << "\nThe best solution is : " << std::endl;
+	currentBestTwoEchelonSol.showTwoEchelonSolution();
 }
 
 //return the solution of the Algorithm
@@ -95,3 +102,4 @@ TwoEchelonSolution GRASPPR::getGraspPRSolution() {
 TwoEchelonSolution GRASPPR::getInitialSolution() {
 	return initialTwoEchelonSol;
 }
+
